@@ -1,0 +1,165 @@
+# ============================================================================
+# civicDNA — app configuration. No code changes needed; edit, rebuild, deploy.
+#
+# RANGE-BASED: the `badges:` list at the bottom is keyed by inclusive score
+# bands (min..max). Name, icon, colour, taglines and the explanatory text can
+# all differ per band. Any band may override the global copy templates.
+#
+# TEMPLATE PLACEHOLDERS usable in every `explanation` / `shareText` string:
+#   {score}       composite index, e.g. 66
+#   {suffix}      score.suffix, e.g. "/100"
+#   {scoreLabel}  score.label, e.g. "civicDNA Index"
+#   {badge}       band name, e.g. "The Measured Believer"
+#   {tagline}     band tagline
+#   {decisive}    decisiveness %, e.g. 66
+#   {decisiveLabel} decisiveness.label, e.g. "decisive"
+#   {avgDistance} avg points off neutral that {decisive} corresponds to
+#   {answered}    issues the user actually answered
+#   {total}       issues offered
+#   {zip}         the user's ZIP
+#   {brand}       brand.name
+#   {url}         brand.shareUrl
+# ============================================================================
+schemaVersion: 2
+
+brand:
+  name: "civicDNA"
+  # Rendered across the top of the shareable PNG.
+  wordmark: "C I V I C D N A"
+  shareUrl: "https://evolvedhow.github.io/civicdna/"
+  # Call-to-action along the bottom of the shareable PNG.
+  badgeCta: "Find your civicDNA"
+  # Small label above the badge name on the results card.
+  badgeEyebrow: "Fingerprint badge"
+
+score:
+  label: "civicDNA Index"
+  suffix: "/100"
+  # The stance scale. neutral MUST be the exact midpoint of min..max or the
+  # decisiveness metric becomes asymmetric (a hard-left and a hard-right
+  # answer would score differently).
+  min: 0
+  max: 100
+  neutral: 50
+
+decisiveness:
+  label: "decisive"
+  # One-line caption under the ring on the shareable PNG.
+  caption: "{decisive}% {decisiveLabel}"
+  # Shown on the badge card, under the score. Explains the number in plain
+  # language. Individual bands may override this.
+  explanation: >-
+    Decisiveness measures distance, not direction. Across the issues you
+    answered, your slider sat an average of {avgDistance} points from the
+    neutral midpoint — that's {decisive}% of the furthest you could have gone.
+    Leaving every slider on neutral would be 0%; pinning every one to an
+    extreme would be 100%. It says nothing about which side you picked: a
+    firmly-held left position and a firmly-held right position score exactly
+    the same, so how a question happens to be worded can't inflate it.
+
+share:
+  # Default share text. Bands may override with their own `shareText`.
+  text: |-
+    {brand} — my {scoreLabel} is {score}{suffix}: {badge}.
+    "{tagline}" · {decisive}% {decisiveLabel} across {answered} of {total} issues.
+    {url}
+
+# How the composite index is assembled.
+#
+# TWO-STAGE, CATEGORY-WEIGHTED:
+#   1. Within a category, topics are averaged using their own `weight` from
+#      topics.json (salience of that issue against its siblings).
+#   2. Category scores are then averaged using the weights below.
+#
+# Stage 2 is the point: without it, a lopsided question bank skews the score.
+# If 12 of 25 topics are `social`, a flat average makes the index mostly a
+# social-issues score. Category weights decouple "how much this theme counts"
+# from "how many questions we happened to write about it".
+#
+# Categories with no answered topics drop out and the rest re-normalise, so a
+# partial run is still scored on the same scale.
+scoring:
+  categoryWeights:
+    market: 1
+    social: 1
+    welfare: 1
+    global: 1
+    governance: 1
+
+# ---------------------------------------------------------------------------
+# Score bands. Inclusive min..max, and they should tile the full score range
+# without gaps. Required: id, min, max, name, icon, color, tagline, description.
+# Optional per band: explanation, shareText (override the templates above).
+# Available icons: beacon, compass, lattice, weave, orbit, scale, fingerprint
+# ---------------------------------------------------------------------------
+badges:
+  - id: lone-beacon
+    min: 0
+    max: 20
+    name: "The Lone Beacon"
+    icon: beacon
+    color: "#0f766e"
+    tagline: "Standing apart from the mainstream field."
+    description: "Your posture sits far from the national center of gravity. The market-aligned, autonomy-facing end of the spectrum reads strongest in your fingerprint."
+
+  - id: quiet-dissident
+    min: 21
+    max: 34
+    name: "The Quiet Dissident"
+    icon: compass
+    color: "#7c3aed"
+    tagline: "A clear direction, quietly held."
+    description: "Consistently off-center, you hold a defined point of view without broadcasting it. Alignment clusters near a distinctive personal pole."
+
+  - id: pragmatic-skeptic
+    min: 35
+    max: 44
+    name: "The Pragmatic Skeptic"
+    icon: lattice
+    color: "#0891b2"
+    tagline: "Mostly aligned, but watchful."
+    description: "You track the general consensus with room for doubt. Near-majority positions fit you, with a few deliberate breaks where you lean off the median."
+
+  - id: centered-pragmatist
+    min: 45
+    max: 54
+    name: "The Centered Pragmatist"
+    icon: weave
+    color: "#4f46e5"
+    tagline: "You track where the country actually sits."
+    description: "Your composite sits inside the national band. You are the useful middle: legible to both sides and hard to peg as a partisan."
+    # A centred score can mean two very different things, so this band spells
+    # the ambiguity out rather than letting the number imply moderation.
+    explanation: >-
+      A centred index like {score} is ambiguous on its own, which is why
+      decisiveness sits beside it. At {decisive}% you averaged {avgDistance}
+      points off neutral. A low figure means you genuinely sat near the middle
+      on most issues; a high one means you took strong positions in opposite
+      directions that cancelled out in the composite.
+
+  - id: measured-believer
+    min: 55
+    max: 64
+    name: "The Measured Believer"
+    icon: orbit
+    color: "#4338ca"
+    tagline: "Convinced, but not absolutist."
+    description: "You lean clearly toward the public-power pole yet keep internal checks. Your fingerprint favors coordinated, collective tools more than rugged individualism."
+
+  - id: systemic-architect
+    min: 65
+    max: 79
+    name: "The Systemic Architect"
+    icon: scale
+    color: "#5b21b6"
+    tagline: "You see the system, and want to rebuild it."
+    description: "A decisive public-power posture: you consistently choose stronger shared institutions over market defaults, and you are comfortable saying so."
+
+  - id: broad-reformer
+    min: 80
+    max: 100
+    name: "The Broad-Spectrum Reformer"
+    icon: fingerprint
+    color: "#6d28d9"
+    tagline: "Few half-measures; your fingerprint is unmistakable."
+    description: "The most decisive public-power posture in the band. Across nearly every axis you sit far toward coordinated, collective, regulated outcomes."

@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+html,
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Large-thumb range slider (cross-browser) */
+.dna-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2rem;
+  border-radius: 9999px;
+  background: #e2e8f0;
+  outline: none;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+.dna-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 9999px;
+  background: #4f46e5;
+  border: 3px solid #ffffff;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.4);
+  cursor: grab;
+}
+
+.dna-range::-webkit-slider-thumb:active {
+  cursor: grabbing;
+}
+
+.dna-range::-moz-range-thumb {
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 9999px;
+  background: #4f46e5;
+  border: 3px solid #ffffff;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.4);
+  cursor: grab;
+}

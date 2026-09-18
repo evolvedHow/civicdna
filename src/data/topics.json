@@ -1,0 +1,121 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "totalTopics": 25,
+    "demoNote": "First 3 of 25 topics shown for schema review; remaining 22 will follow the identical shape.",
+    "scale": {
+      "min": 0,
+      "max": 100,
+      "neutral": 50
+    },
+    "scaleNote": "neutral MUST be the exact midpoint of min..max, or decisiveness becomes asymmetric.",
+    "anchorNote": "Anchor orientation is a scoring invariant: leftAnchorLabel is always the market/autonomy pole and rightAnchorLabel always the collective/regulated pole. Flipping one topic silently corrupts the composite index."
+  },
+  "topics": [
+    {
+      "id": "firearm-regulation",
+      "topicName": "Firearm Regulation",
+      "category": "social",
+      "description": "Should the federal government tighten or relax the rules around who can buy guns, which weapons are legal, and how they are carried in public?",
+      "leftAnchorLabel": "Absolute Deregulation",
+      "rightAnchorLabel": "Strict Total Regulation",
+      "nationalAvg": 58,
+      "demographicSplits": {
+        "gender": {
+          "men": 50,
+          "women": 64
+        },
+        "race": {
+          "white": 55,
+          "black": 70,
+          "hispanic": 58,
+          "asian": 60,
+          "native": 62
+        },
+        "income": {
+          "lt40k": 66,
+          "_40to80k": 59,
+          "_80to150k": 53,
+          "gt150k": 51
+        },
+        "urbanicity": {
+          "urban": 65,
+          "suburban": 56,
+          "rural": 47
+        }
+      },
+      "source": "Pew Research Center · Guns in America (2023) · ACS 5-yr proxy",
+      "weight": 1
+    },
+    {
+      "id": "universal-healthcare",
+      "topicName": "Universal Healthcare",
+      "category": "welfare",
+      "description": "Should the U.S. guarantee health coverage for every resident through a publicly funded system, or leave access primarily to private insurance and market choice?",
+      "leftAnchorLabel": "Pure Market Insurance",
+      "rightAnchorLabel": "Universal Public Coverage",
+      "nationalAvg": 54,
+      "demographicSplits": {
+        "gender": {
+          "men": 51,
+          "women": 61
+        },
+        "race": {
+          "white": 52,
+          "black": 77,
+          "hispanic": 67,
+          "asian": 61,
+          "native": 69
+        },
+        "income": {
+          "lt40k": 68,
+          "_40to80k": 56,
+          "_80to150k": 48,
+          "gt150k": 42
+        },
+        "urbanicity": {
+          "urban": 65,
+          "suburban": 55,
+          "rural": 44
+        }
+      },
+      "source": "KFF Health Tracking Poll (2023) · ACS 5-yr proxy",
+      "weight": 1.3
+    },
+    {
+      "id": "trade-offshoring",
+      "topicName": "Trade & Offshoring",
+      "category": "global",
+      "description": "Should the U.S. prioritize free trade and global supply chains, or use tariffs and industrial policy to bring manufacturing home and reduce dependence on foreign production?",
+      "leftAnchorLabel": "Full Free Trade",
+      "rightAnchorLabel": "Total Economic Protectionism",
+      "nationalAvg": 52,
+      "demographicSplits": {
+        "gender": {
+          "men": 57,
+          "women": 47
+        },
+        "race": {
+          "white": 55,
+          "black": 50,
+          "hispanic": 49,
+          "asian": 53,
+          "native": 56
+        },
+        "income": {
+          "lt40k": 58,
+          "_40to80k": 53,
+          "_80to150k": 48,
+          "gt150k": 44
+        },
+        "urbanicity": {
+          "urban": 42,
+          "suburban": 50,
+          "rural": 64
+        }
+      },
+      "source": "Gallup Trade & Global Economy Poll (2024) · ACS 5-yr proxy",
+      "weight": 0.9
+    }
+  ]
+}

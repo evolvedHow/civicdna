@@ -1,0 +1,55 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Lets you re-deploy from the Actions tab without pushing a commit.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race. In-progress runs are allowed to finish so a
+# half-uploaded artifact is never published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # `npm run build` is `tsc --noEmit && vite build`, so a type error fails
+      # the deploy rather than shipping a stale or broken bundle.
+      - run: npm run build
+        env:
+          # Optional. Set under Settings > Secrets and variables > Actions.
+          # Unset = the AI read-out is compiled out and the app falls back to
+          # its deterministic local read-out. The build succeeds either way.
+          VITE_NARRATIVE_URL: ${{ vars.VITE_NARRATIVE_URL }}
+          VITE_NARRATIVE_TOKEN: ${{ secrets.VITE_NARRATIVE_TOKEN }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
