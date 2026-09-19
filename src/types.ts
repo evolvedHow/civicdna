@@ -14,27 +14,38 @@ export type Category =
  */
 export type TopicStatus = "core" | "current" | "emerging" | "archived";
 
-export type GenderSplit = { men: number; women: number };
+/**
+ * Splits are deliberately nullable: a `null` cell means the cited survey did
+ * not publish that subgroup's figure, and the UI says "not reported" rather
+ * than inventing one. A whole dimension (`gender`, `race`, ...) may also be
+ * null when the source reports none of its subgroups. Only empirically
+ * verified cells are populated (see topics.json).
+ */
+export type GenderSplit = { men: number | null; women: number | null };
 export type RaceSplit = {
-  white: number;
-  black: number;
-  hispanic: number;
-  asian: number;
-  native: number;
+  white: number | null;
+  black: number | null;
+  hispanic: number | null;
+  asian: number | null;
+  native: number | null;
 };
 export type IncomeSplit = {
-  lt40k: number;
-  _40to80k: number;
-  _80to150k: number;
-  gt150k: number;
+  lt40k: number | null;
+  _40to80k: number | null;
+  _80to150k: number | null;
+  gt150k: number | null;
 };
-export type UrbanicitySplit = { urban: number; suburban: number; rural: number };
+export type UrbanicitySplit = {
+  urban: number | null;
+  suburban: number | null;
+  rural: number | null;
+};
 
 export interface DemographicSplits {
-  gender: GenderSplit;
-  race: RaceSplit;
-  income: IncomeSplit;
-  urbanicity: UrbanicitySplit;
+  gender: GenderSplit | null;
+  race: RaceSplit | null;
+  income: IncomeSplit | null;
+  urbanicity: UrbanicitySplit | null;
 }
 
 export interface Topic {

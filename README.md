@@ -84,16 +84,23 @@ Each topic may carry:
 - `dimensions` — documentation-only list of sub-axes a topic really spans, for
   a future multi-question model. No scoring logic reads it.
 
-### Demographic data is deliberately null
+### Demographic benchmark data
 
-`nationalAvg`, `demographicSplits` and `source` are `null` on every topic.
-**Do not populate them with estimates.** The app degrades honestly: issue cards
-show "no validated benchmark for this issue yet" instead of bars, and the cohort
-comparison explains it has nothing to compare against. Benchmarks switch on
-per-topic as real data is attached.
+Every active topic carries a real survey benchmark: `nationalAvg` (the % of the
+national public endorsing the right-anchor, more collective/regulated pole of
+that issue's spectrum), `demographicSplits` where the cited survey published
+crosstabs, and a `source` string naming the pollster, field dates, sample, and
+the exact question. Provenance lives in the `source` field — never fabricate or
+guess a figure.
+
+Cells a survey does not publish are `null` by design and are never estimated.
+The app degrades honestly: issue cards show "not reported" for hidden subgroups,
+and cards whose survey published no crosstabs at all explain that cohort
+comparison has nothing to show.
 
 The validator enforces that `nationalAvg` and `demographicSplits` arrive
-together, and that neither ships without a `source`.
+together, that neither ships without a `source`, and that every non-null figure
+lands on the 0–100 scale.
 
 ## Validation
 

@@ -45,6 +45,8 @@ for (const t of topics) {
 
   // §4 — partial data is worse than none: a nationalAvg with no source is an
   // uncitable claim, and splits without an average cannot be interpreted.
+  // Demographic cells may be null (the cited survey didn't publish that
+  // subgroup) but every non-null figure must land on the scale.
   const hasAvg = t.nationalAvg != null;
   const hasSplits = t.demographicSplits != null;
   const hasSource = t.source != null && t.source !== "";
@@ -55,13 +57,19 @@ for (const t of topics) {
   if (hasAvg && (t.nationalAvg < meta.scale.min || t.nationalAvg > meta.scale.max))
     fail(`${at}: nationalAvg ${t.nationalAvg} outside scale`);
 
+  let reportedCells = 0;
   if (hasSplits) {
     for (const [dim, entries] of Object.entries(t.demographicSplits)) {
+      if (entries == null) continue; // whole dimension unpublished
       for (const [k, v] of Object.entries(entries)) {
+        if (v == null) continue; // single subgroup unpublished
+        reportedCells += 1;
         if (typeof v !== "number" || v < meta.scale.min || v > meta.scale.max)
           fail(`${at}: ${dim}.${k} = ${v} outside scale`);
       }
     }
+    if (reportedCells === 0)
+      warn(`${at}: benchmark attached but no demographic cell is reported — cohort comparisons will show no data`);
   }
 }
 

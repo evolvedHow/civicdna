@@ -1,6 +1,5 @@
 import type { LocalBenchmark, Profile, Topic } from "../types";
 import { hasBenchmark } from "./topics";
-import { cohortCount } from "./profile";
 
 /** FNV-1a so the same (zip, topic) always yields the same numbers. */
 function hash(str: string): number {
@@ -25,12 +24,17 @@ function mulberry32(seed: number): () => number {
 
 const clamp = (v: number) => Math.min(95, Math.max(5, Math.round(v)));
 
-function shiftApprox<T extends Record<string, number>>(
-  entry: T,
+/** Undefined/null cells pass through untouched; present cells get seeded noise. */
+function shiftApprox<T extends Record<string, number | null>>(
+  entry: T | null,
   rng: () => number,
-): T {
+): T | null {
+  if (!entry) return null;
   return Object.fromEntries(
-    Object.entries(entry).map(([k, v]) => [k, clamp(v + (rng() - 0.5) * 10)]),
+    Object.entries(entry).map(([k, v]) => [
+      k,
+      v == null ? null : clamp(v + (rng() - 0.5) * 10),
+    ]),
   ) as T;
 }
 
@@ -48,25 +52,40 @@ function zipDensity(zip: string): number {
 }
 
 /**
- * How far the user's chosen demographic cohort diverges from the
- * national average on this issue (mean across the dims they shared).
+ * How far the user's chosen demographic cohort diverges from the national
+ * average on this issue (mean across the dims they shared that actually have
+ * survey data). `n` is how many of those dims contributed, so callers can
+ * scale the cohort pull by real data coverage rather than by what the user
+ * filled in.
  */
-export function cohortOffset(topic: Topic, profile?: Profile): number {
-  if (!profile || !hasBenchmark(topic)) return 0;
+export function cohortOffset(
+  topic: Topic,
+  profile?: Profile,
+): { offset: number; n: number } {
+  if (!profile || !hasBenchmark(topic)) return { offset: 0, n: 0 };
   const values: number[] = [];
-  if (profile.gender) values.push(topic.demographicSplits.gender[profile.gender]);
-  if (profile.race) values.push(topic.demographicSplits.race[profile.race]);
-  if (profile.income) values.push(topic.demographicSplits.income[profile.income]);
-  if (values.length === 0) return 0;
+  if (profile.gender) {
+    const v = topic.demographicSplits.gender?.[profile.gender];
+    if (v != null) values.push(v);
+  }
+  if (profile.race) {
+    const v = topic.demographicSplits.race?.[profile.race];
+    if (v != null) values.push(v);
+  }
+  if (profile.income) {
+    const v = topic.demographicSplits.income?.[profile.income];
+    if (v != null) values.push(v);
+  }
+  if (values.length === 0) return { offset: 0, n: 0 };
   const mean = values.reduce((a, b) => a + b, 0) / values.length;
-  return mean - topic.nationalAvg;
+  return { offset: mean - topic.nationalAvg, n: values.length };
 }
 
 /**
  * Deterministic mock "zip-level average" for a topic.
  * National average + per-zip seeded noise + urbanicity pull, then blended
- * toward the user's demographic cohorts. The more dims they share, the
- * stronger the cohort pull (capped).
+ * toward the user's demographic cohorts. The more dims with REAL data they
+ * share, the stronger the cohort pull (capped).
  */
 export function localBenchmark(
   zip: string,
@@ -79,21 +98,20 @@ export function localBenchmark(
 
   const key = (salt: string) => mulberry32(hash(`${zip}:${topic.id}:${salt}`));
   const density = zipDensity(zip);
+  const urbs = topic.demographicSplits.urbanicity;
   const urbanPull =
-    topic.demographicSplits.urbanicity.urban -
-    topic.demographicSplits.urbanicity.rural;
+    urbs?.urban != null && urbs.rural != null ? urbs.urban - urbs.rural : 0;
 
-  // Count only the dims the user actually shared. (An empty `{}` profile is
-  // still truthy, so testing `profile` itself would apply a cohort pull to
-  // users who opted out of every question.)
-  const dims = profile ? cohortCount(profile) : 0;
-  const blend = Math.min(0.5, 0.17 * dims);
+  // Only blend toward cohorts whose subgroup figure the survey actually
+  // published — a user who shared a dim with no crosstab gets no pull there.
+  const { offset, n } = cohortOffset(topic, profile);
+  const blend = Math.min(0.5, 0.17 * n);
 
   const avg = clamp(
     topic.nationalAvg +
       (key("avg")() - 0.5) * 22 +
       (density - 0.5) * urbanPull +
-      cohortOffset(topic, profile) * blend,
+      offset * blend,
   );
 
   return {

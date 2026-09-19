@@ -1,6 +1,6 @@
 import type { Profile, Topic } from "../types";
 import { CATEGORY_META } from "../lib/categories";
-import { localBenchmark } from "../lib/zipData";
+import { localBenchmark, cohortOffset } from "../lib/zipData";
 import { hasBenchmark } from "../lib/topics";
 import { cohortLabel } from "../lib/profile";
 import { MAX_DISTANCE, SCORE } from "../lib/config";
@@ -23,18 +23,18 @@ const NEUTRAL_BAND = 4;
 const DEMOGRAPHIC_BARS: {
   label: string;
   color: string;
-  pick: (d: NonNullable<Topic["demographicSplits"]>) => number;
+  pick: (d: NonNullable<Topic["demographicSplits"]>) => number | null;
 }[] = [
-  { label: "Men", color: "#64748b", pick: (d) => d.gender.men },
-  { label: "Women", color: "#334155", pick: (d) => d.gender.women },
-  { label: "White", color: "#94a3b8", pick: (d) => d.race.white },
-  { label: "Black", color: "#475569", pick: (d) => d.race.black },
-  { label: "Hispanic", color: "#818cf8", pick: (d) => d.race.hispanic },
-  { label: "Asian", color: "#38bdf8", pick: (d) => d.race.asian },
-  { label: "Income under $40K", color: "#a3e635", pick: (d) => d.income.lt40k },
-  { label: "Income $40K–$80K", color: "#84cc16", pick: (d) => d.income._40to80k },
-  { label: "Income $80K–$150K", color: "#65a30d", pick: (d) => d.income._80to150k },
-  { label: "Income $150K+", color: "#4d7c0f", pick: (d) => d.income.gt150k },
+  { label: "Men", color: "#64748b", pick: (d) => d.gender?.men ?? null },
+  { label: "Women", color: "#334155", pick: (d) => d.gender?.women ?? null },
+  { label: "White", color: "#94a3b8", pick: (d) => d.race?.white ?? null },
+  { label: "Black", color: "#475569", pick: (d) => d.race?.black ?? null },
+  { label: "Hispanic", color: "#818cf8", pick: (d) => d.race?.hispanic ?? null },
+  { label: "Asian", color: "#38bdf8", pick: (d) => d.race?.asian ?? null },
+  { label: "Income under $40K", color: "#a3e635", pick: (d) => d.income?.lt40k ?? null },
+  { label: "Income $40K–$80K", color: "#84cc16", pick: (d) => d.income?._40to80k ?? null },
+  { label: "Income $80K–$150K", color: "#65a30d", pick: (d) => d.income?._80to150k ?? null },
+  { label: "Income $150K+", color: "#4d7c0f", pick: (d) => d.income?.gt150k ?? null },
 ];
 
 function MiniBar({
@@ -83,6 +83,16 @@ export default function IssueCard({
   const benchmarked = hasBenchmark(topic);
   const local = localBenchmark(zip, topic, profile);
   const label = cohortLabel(profile);
+  const cohortActive = cohortOffset(topic, profile).n > 0;
+
+  const splits = topic.demographicSplits;
+  const reportedBars = DEMOGRAPHIC_BARS.map((bar) => ({
+    ...bar,
+    value: splits ? bar.pick(splits) : null,
+  })).filter((bar): bar is typeof bar & { value: number } => bar.value != null);
+
+  const positionText = `of Americans lean toward "${topic.rightAnchorLabel}"`;
+  const localText = `estimated residents in your area lean toward "${topic.rightAnchorLabel}"`;
 
   const off = value - SCORE.neutral;
   const towardLeft = off < 0;
@@ -138,7 +148,7 @@ export default function IssueCard({
                 {topic.nationalAvg}%
               </span>
               <span className="pb-0.5 text-xs leading-tight text-slate-500">
-                of Americans lean toward this position
+                {positionText}
               </span>
             </p>
           </div>
@@ -147,16 +157,29 @@ export default function IssueCard({
             <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
               Demographic breakdown
             </p>
-            <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2.5">
-              {DEMOGRAPHIC_BARS.map((bar) => (
-                <MiniBar
-                  key={bar.label}
-                  label={bar.label}
-                  value={bar.pick(topic.demographicSplits!)}
-                  color={bar.color}
-                />
-              ))}
-            </div>
+            {reportedBars.length > 0 ? (
+              <>
+                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2.5">
+                  {reportedBars.map((bar) => (
+                    <MiniBar
+                      key={bar.label}
+                      label={bar.label}
+                      value={bar.value}
+                      color={bar.color}
+                    />
+                  ))}
+                </div>
+                <p className="mt-2 text-[10px] text-slate-400">
+                  Only the subgroups the cited survey reports are shown.
+                </p>
+              </>
+            ) : (
+              <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
+                The cited survey does not publish demographic crosstabs for
+                this issue, so there is nothing to break the national figure
+                down by.
+              </p>
+            )}
           </div>
 
           <div className="mt-4 rounded-xl border border-teal-200 bg-teal-50 p-3">
@@ -171,13 +194,13 @@ export default function IssueCard({
                 {local.avg}%
               </span>
               <span className="pb-0.5 text-xs leading-tight text-teal-800/80">
-                estimated residents in your area aligned with this position
+                {localText}
               </span>
             </p>
-            {label && (
+            {label && cohortActive && (
               <p className="mt-1.5 text-[11px] font-medium text-teal-700/80">
                 Cohort-tuned against: {label} — your local figure is blended
-                toward their leanings.
+                toward their published leanings on this issue.
               </p>
             )}
           </div>
