@@ -5,6 +5,11 @@
 # bands (min..max). Name, icon, colour, taglines and the explanatory text can
 # all differ per band. Any band may override the global copy templates.
 #
+# IMPORTANT (change request §5, §14): the index is NOT a left/right political
+# identity. It describes a pattern of civic positions across issues. Band copy
+# must not use Democrat / Republican / liberal / conservative / left / right as
+# labels for the score.
+#
 # TEMPLATE PLACEHOLDERS usable in every `explanation` / `shareText` string:
 #   {score}       composite index, e.g. 66
 #   {suffix}      score.suffix, e.g. "/100"
@@ -53,9 +58,9 @@ decisiveness:
     answered, your slider sat an average of {avgDistance} points from the
     neutral midpoint — that's {decisive}% of the furthest you could have gone.
     Leaving every slider on neutral would be 0%; pinning every one to an
-    extreme would be 100%. It says nothing about which side you picked: a
-    firmly-held left position and a firmly-held right position score exactly
-    the same, so how a question happens to be worded can't inflate it.
+    extreme would be 100%. It says nothing about which end you picked — two
+    people at opposite ends of the same issue score identically — so how a
+    question happens to be worded can't inflate it.
 
 share:
   # Default share text. Bands may override with their own `shareText`.
@@ -79,10 +84,19 @@ share:
 # Categories with no answered topics drop out and the rest re-normalise, so a
 # partial run is still scored on the same scale.
 scoring:
+  # Weight each topic by how important the respondent says it is, using
+  #   effectiveWeight = topicWeight x (salience / 50)
+  # Midpoint salience is a no-op, so nobody's score moves unless they actually
+  # set salience. Leave FALSE unless you have re-tested: turning it on changes
+  # the meaning of every previously recorded composite.
+  useSalience: false
+
   categoryWeights:
     market: 1
-    social: 1
     welfare: 1
+    social: 1
+    environment: 1
+    technology: 1
     global: 1
     governance: 1
 
@@ -100,7 +114,7 @@ badges:
     icon: beacon
     color: "#0f766e"
     tagline: "Standing apart from the mainstream field."
-    description: "Your posture sits far from the national center of gravity. The market-aligned, autonomy-facing end of the spectrum reads strongest in your fingerprint."
+    description: "Across these issues you consistently favour individual and market discretion over collective coordination. That is a pattern of policy instincts, not a party label."
 
   - id: quiet-dissident
     min: 21
@@ -109,7 +123,7 @@ badges:
     icon: compass
     color: "#7c3aed"
     tagline: "A clear direction, quietly held."
-    description: "Consistently off-center, you hold a defined point of view without broadcasting it. Alignment clusters near a distinctive personal pole."
+    description: "Consistently off-centre, you hold a defined point of view without broadcasting it. Your answers cluster near one end of most spectra, with enough variation to resist easy categorisation."
 
   - id: pragmatic-skeptic
     min: 35
@@ -118,7 +132,7 @@ badges:
     icon: lattice
     color: "#0891b2"
     tagline: "Mostly aligned, but watchful."
-    description: "You track the general consensus with room for doubt. Near-majority positions fit you, with a few deliberate breaks where you lean off the median."
+    description: "You lean toward individual discretion on balance, but not reflexively. Several issues pull you the other way, which keeps your overall pattern mixed."
 
   - id: centered-pragmatist
     min: 45
@@ -127,7 +141,7 @@ badges:
     icon: weave
     color: "#4f46e5"
     tagline: "You track where the country actually sits."
-    description: "Your composite sits inside the national band. You are the useful middle: legible to both sides and hard to peg as a partisan."
+    description: "Your composite sits near the midpoint. Read this alongside your decisiveness: it can mean measured moderation across the board, or strong positions in opposing directions that cancel out."
     # A centred score can mean two very different things, so this band spells
     # the ambiguity out rather than letting the number imply moderation.
     explanation: >-
@@ -144,7 +158,7 @@ badges:
     icon: orbit
     color: "#4338ca"
     tagline: "Convinced, but not absolutist."
-    description: "You lean clearly toward the public-power pole yet keep internal checks. Your fingerprint favors coordinated, collective tools more than rugged individualism."
+    description: "You lean clearly toward collective and coordinated solutions, while keeping internal checks. You favour shared institutions on most issues without applying the principle uniformly."
 
   - id: systemic-architect
     min: 65
@@ -153,7 +167,7 @@ badges:
     icon: scale
     color: "#5b21b6"
     tagline: "You see the system, and want to rebuild it."
-    description: "A decisive public-power posture: you consistently choose stronger shared institutions over market defaults, and you are comfortable saying so."
+    description: "You consistently choose stronger shared institutions over market defaults, across categories rather than on a single theme, and you are comfortable saying so."
 
   - id: broad-reformer
     min: 80
@@ -162,4 +176,4 @@ badges:
     icon: fingerprint
     color: "#6d28d9"
     tagline: "Few half-measures; your fingerprint is unmistakable."
-    description: "The most decisive public-power posture in the band. Across nearly every axis you sit far toward coordinated, collective, regulated outcomes."
+    description: "The most consistent pattern in the set. Across nearly every category you sit far toward coordinated, collective and regulated outcomes."

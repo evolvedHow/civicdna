@@ -1,6 +1,7 @@
 import type { Profile, Topic } from "../types";
 import { CATEGORY_META } from "../lib/categories";
 import { localBenchmark } from "../lib/zipData";
+import { hasBenchmark } from "../lib/topics";
 import { cohortLabel } from "../lib/profile";
 import { MAX_DISTANCE, SCORE } from "../lib/config";
 
@@ -18,6 +19,23 @@ interface IssueCardProps {
 }
 
 const NEUTRAL_BAND = 4;
+
+const DEMOGRAPHIC_BARS: {
+  label: string;
+  color: string;
+  pick: (d: NonNullable<Topic["demographicSplits"]>) => number;
+}[] = [
+  { label: "Men", color: "#64748b", pick: (d) => d.gender.men },
+  { label: "Women", color: "#334155", pick: (d) => d.gender.women },
+  { label: "White", color: "#94a3b8", pick: (d) => d.race.white },
+  { label: "Black", color: "#475569", pick: (d) => d.race.black },
+  { label: "Hispanic", color: "#818cf8", pick: (d) => d.race.hispanic },
+  { label: "Asian", color: "#38bdf8", pick: (d) => d.race.asian },
+  { label: "Income under $40K", color: "#a3e635", pick: (d) => d.income.lt40k },
+  { label: "Income $40K–$80K", color: "#84cc16", pick: (d) => d.income._40to80k },
+  { label: "Income $80K–$150K", color: "#65a30d", pick: (d) => d.income._80to150k },
+  { label: "Income $150K+", color: "#4d7c0f", pick: (d) => d.income.gt150k },
+];
 
 function MiniBar({
   label,
@@ -62,6 +80,7 @@ export default function IssueCard({
   onStanceChange,
 }: IssueCardProps) {
   const meta = CATEGORY_META[topic.category];
+  const benchmarked = hasBenchmark(topic);
   const local = localBenchmark(zip, topic, profile);
   const label = cohortLabel(profile);
 
@@ -100,113 +119,82 @@ export default function IssueCard({
         </p>
       </section>
 
-      {/* Data context panel */}
-      <section className="mx-5 mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-1">
+      {/* Data context panel — only rendered when real data backs it. */}
+      {benchmarked && local ? (
+        <section className="mx-5 mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-1">
+            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+              Data context
+            </h3>
+            <span className="text-[10px] text-slate-400">{topic.source}</span>
+          </div>
+
+          <div className="mt-3">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+              National average
+            </p>
+            <p className="mt-1 flex items-end gap-2">
+              <span className="text-2xl font-extrabold tabular-nums text-slate-900">
+                {topic.nationalAvg}%
+              </span>
+              <span className="pb-0.5 text-xs leading-tight text-slate-500">
+                of Americans lean toward this position
+              </span>
+            </p>
+          </div>
+
+          <div className="mt-4">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+              Demographic breakdown
+            </p>
+            <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2.5">
+              {DEMOGRAPHIC_BARS.map((bar) => (
+                <MiniBar
+                  key={bar.label}
+                  label={bar.label}
+                  value={bar.pick(topic.demographicSplits!)}
+                  color={bar.color}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-teal-200 bg-teal-50 p-3">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-teal-600" />
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-teal-700">
+                Local benchmark · ZIP {zip}
+              </p>
+            </div>
+            <p className="mt-2 flex items-end gap-2">
+              <span className="text-2xl font-extrabold tabular-nums text-teal-900">
+                {local.avg}%
+              </span>
+              <span className="pb-0.5 text-xs leading-tight text-teal-800/80">
+                estimated residents in your area aligned with this position
+              </span>
+            </p>
+            {label && (
+              <p className="mt-1.5 text-[11px] font-medium text-teal-700/80">
+                Cohort-tuned against: {label} — your local figure is blended
+                toward their leanings.
+              </p>
+            )}
+          </div>
+        </section>
+      ) : (
+        <section className="mx-5 mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4">
           <h3 className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
             Data context
           </h3>
-          <span className="text-[10px] text-slate-400">{topic.source}</span>
-        </div>
-
-        {/* National average */}
-        <div className="mt-3">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-            National average
+          <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+            No validated benchmark for this issue yet, so there is nothing to
+            compare you against here. Your answer is still recorded and still
+            counts toward your score — it just won't appear in the cohort
+            comparison until real survey data is attached.
           </p>
-          <p className="mt-1 flex items-end gap-2">
-            <span className="text-2xl font-extrabold tabular-nums text-slate-900">
-              {topic.nationalAvg}%
-            </span>
-            <span className="pb-0.5 text-xs leading-tight text-slate-500">
-              of Americans lean toward this position
-            </span>
-          </p>
-        </div>
-
-        {/* Demographic breakdown */}
-        <div className="mt-4">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-            Demographic breakdown
-          </p>
-          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2.5">
-            <MiniBar
-              label="Men"
-              value={topic.demographicSplits.gender.men}
-              color="#64748b"
-            />
-            <MiniBar
-              label="Women"
-              value={topic.demographicSplits.gender.women}
-              color="#334155"
-            />
-            <MiniBar
-              label="White"
-              value={topic.demographicSplits.race.white}
-              color="#94a3b8"
-            />
-            <MiniBar
-              label="Black"
-              value={topic.demographicSplits.race.black}
-              color="#475569"
-            />
-            <MiniBar
-              label="Hispanic"
-              value={topic.demographicSplits.race.hispanic}
-              color="#818cf8"
-            />
-            <MiniBar
-              label="Asian"
-              value={topic.demographicSplits.race.asian}
-              color="#38bdf8"
-            />
-            <MiniBar
-              label="Income under $40K"
-              value={topic.demographicSplits.income.lt40k}
-              color="#a3e635"
-            />
-            <MiniBar
-              label="Income $40K–$80K"
-              value={topic.demographicSplits.income._40to80k}
-              color="#84cc16"
-            />
-            <MiniBar
-              label="Income $80K–$150K"
-              value={topic.demographicSplits.income._80to150k}
-              color="#65a30d"
-            />
-            <MiniBar
-              label="Income $150K+"
-              value={topic.demographicSplits.income.gt150k}
-              color="#4d7c0f"
-            />
-          </div>
-        </div>
-
-        {/* Local benchmark */}
-        <div className="mt-4 rounded-xl border border-teal-200 bg-teal-50 p-3">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 shrink-0 rounded-full bg-teal-600" />
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-teal-700">
-              Local benchmark · ZIP {zip}
-            </p>
-          </div>
-          <p className="mt-2 flex items-end gap-2">
-            <span className="text-2xl font-extrabold tabular-nums text-teal-900">
-              {local.avg}%
-            </span>
-            <span className="pb-0.5 text-xs leading-tight text-teal-800/80">
-              estimated residents in your area aligned with this position
-            </span>
-          </p>
-          {label && (
-            <p className="mt-1.5 text-[11px] font-medium text-teal-700/80">
-              Cohort-tuned against: {label} — your local figure is blended
-              toward their leanings.
-            </p>
-          )}
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Stance slider */}
       <div className="px-5 pt-5">

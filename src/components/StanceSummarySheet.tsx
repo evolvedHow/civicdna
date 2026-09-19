@@ -1,4 +1,6 @@
 import type { Answers, Topic } from "../types";
+import { getPosition } from "../lib/stance";
+import { SCORE } from "../lib/config";
 
 interface StanceSummarySheetProps {
   open: boolean;
@@ -65,11 +67,13 @@ export default function StanceSummarySheet({
                     <span className="h-1 w-14 overflow-hidden rounded-full bg-slate-200">
                       <span
                         className="block h-full rounded-full bg-indigo-500"
-                        style={{ width: `${answers[t.id] ?? 50}%` }}
+                        style={{
+                          width: `${getPosition(answers, t.id) ?? SCORE.neutral}%`,
+                        }}
                       />
                     </span>
                     <span className="w-7 text-right text-xs font-bold tabular-nums text-slate-800">
-                      {answers[t.id]}
+                      {getPosition(answers, t.id)}
                     </span>
                   </span>
                 ) : (

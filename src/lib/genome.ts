@@ -1,13 +1,31 @@
 import type { Answers, Category, Topic } from "../types";
-import { CATEGORY_WEIGHTS, MAX_DISTANCE, SCORE } from "./config";
+import { CATEGORY_WEIGHTS, MAX_DISTANCE, SCORE, USE_SALIENCE } from "./config";
+import { getPosition, getSalience } from "./stance";
 
 export const CATEGORIES: Category[] = [
   "market",
-  "social",
   "welfare",
+  "social",
+  "environment",
+  "technology",
   "global",
   "governance",
 ];
+
+/**
+ * effectiveWeight = topicWeight x (salience / neutral)
+ *
+ * Midpoint salience leaves the weight untouched, so turning USE_SALIENCE on
+ * does not shift the score of anyone who never set a salience. OFF by default:
+ * enabling it changes the meaning of every historical composite, which the
+ * change request (§12) explicitly warns against doing silently.
+ */
+function salienceMultiplier(answers: Answers, topicId: string): number {
+  if (!USE_SALIENCE) return 1;
+  const s = getSalience(answers, topicId);
+  if (s == null || SCORE.neutral === 0) return 1;
+  return s / SCORE.neutral;
+}
 
 export interface CategoryBreakdown {
   category: Category;
@@ -77,9 +95,10 @@ export function computeGenome(topics: Topic[], answers: Answers): Genome {
   for (const t of topics) {
     const a = bump(t.category);
     a.total++;
-    const v = answers[t.id];
+    const v = getPosition(answers, t.id);
     if (v == null) continue;
-    const w = t.weight ?? 1;
+    const w = (t.weight ?? 1) * salienceMultiplier(answers, t.id);
+    if (w <= 0) continue; // zero salience removes the topic entirely
     answered++;
     a.answered++;
     a.w += w;

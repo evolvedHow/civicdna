@@ -1,6 +1,6 @@
-import topicsJson from "../data/topics.json";
 import { BRAND } from "../lib/config";
-import type { Profile, Topic } from "../types";
+import type { Profile } from "../types";
+import { TOPICS, TOPICS_WITH_BENCHMARK } from "../lib/topics";
 import { useAppStore } from "../store/useAppStore";
 import {
   GENDER_OPTIONS,
@@ -8,7 +8,8 @@ import {
   INCOME_OPTIONS,
 } from "../lib/profile";
 
-const TOPIC_COUNT = (topicsJson.topics as Topic[]).length;
+const TOPIC_COUNT = TOPICS.length;
+const BENCHMARK_COUNT = TOPICS_WITH_BENCHMARK.length;
 
 const selectCls =
   "w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200";
@@ -69,9 +70,12 @@ export default function Onboarding() {
         Find where you actually stand.
       </h1>
       <p className="mt-2 text-sm leading-relaxed text-slate-600">
-        Compare your views on {TOPIC_COUNT} national issue
-        {TOPIC_COUNT === 1 ? "" : "s"} against national benchmarks and against
-        the community around your ZIP code.
+        Map where you stand across {TOPIC_COUNT} issue
+        {TOPIC_COUNT === 1 ? "" : "s"} shaping public debate — technology,
+        security, the economy, climate and civic life.
+        {BENCHMARK_COUNT > 0
+          ? ` ${BENCHMARK_COUNT} of them can be compared against national and local benchmarks.`
+          : " Benchmark comparisons switch on per issue as validated survey data is attached."}
       </p>
 
       {/* ZIP — required */}
@@ -80,7 +84,9 @@ export default function Onboarding() {
           Your ZIP code
         </label>
         <p className="mt-0.5 text-xs text-slate-500">
-          Required — drives your hyper-local benchmarks.
+          {BENCHMARK_COUNT > 0
+            ? "Required — drives your local benchmarks."
+            : "Required. Local benchmarks activate once validated survey data is attached."}
         </p>
         <input
           id="zip"
@@ -106,10 +112,10 @@ export default function Onboarding() {
             Fine-tune your cohort (optional)
           </p>
           <p className="mt-1 text-xs leading-relaxed text-indigo-800/80">
-            The more you share, the sharper your comparisons. We blend your
-            ZIP's local data toward the demographic groups that match you, so
-            every figure is tuned to people like you. Zip alone works; race,
-            gender and income each make the cohort more specific.
+            The more you share, the sharper your comparisons. Where an issue
+            has validated survey data, we blend the local figure toward the
+            demographic groups that match you. ZIP alone works; gender, race
+            and income each make the cohort more specific.
           </p>
         </div>
 

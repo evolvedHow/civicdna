@@ -1,121 +1,436 @@
 {
   "meta": {
-    "schemaVersion": 1,
-    "totalTopics": 25,
-    "demoNote": "First 3 of 25 topics shown for schema review; remaining 22 will follow the identical shape.",
+    "schemaVersion": 2,
+    "totalTopics": 23,
     "scale": {
       "min": 0,
       "max": 100,
       "neutral": 50
     },
+    "dataStatus": "Editorial topic framework; demographic data pending validation. nationalAvg, demographicSplits and source are null by design and MUST NOT be populated with estimates.",
+    "geographicScope": "United States civic attitudes with global issues included",
     "scaleNote": "neutral MUST be the exact midpoint of min..max, or decisiveness becomes asymmetric.",
-    "anchorNote": "Anchor orientation is a scoring invariant: leftAnchorLabel is always the market/autonomy pole and rightAnchorLabel always the collective/regulated pole. Flipping one topic silently corrupts the composite index."
+    "anchorNote": "leftAnchorLabel/rightAnchorLabel are the poles of THIS ISSUE'S policy spectrum, not political left/right. Orientation is a scoring invariant: rightAnchorLabel is always the more collective/regulated/publicly-coordinated pole. Flipping one topic silently corrupts the composite index.",
+    "migrations": [
+      "v1->v2: topic id `universal-healthcare` renamed to `healthcare-system` (identical construct and anchor orientation). Stored answers are remapped in the persisted store migration.",
+      "v1->v2: topic `trade-offshoring` has no successor in the v2 framework and is retained with topicStatus 'archived'. Historical answers keep their original meaning but no longer contribute to the composite."
+    ]
   },
   "topics": [
+    {
+      "id": "artificial-intelligence-governance",
+      "topicName": "Artificial Intelligence Governance",
+      "category": "technology",
+      "description": "How should governments balance rapid AI development and private innovation against safety requirements, accountability, transparency, and restrictions on high-risk uses?",
+      "leftAnchorLabel": "Minimal AI Regulation",
+      "rightAnchorLabel": "Comprehensive AI Oversight",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.4,
+      "topicStatus": "emerging",
+      "activeFrom": null,
+      "activeUntil": null,
+      "dimensions": [
+        "innovation_vs_regulation",
+        "open_vs_controlled_models",
+        "liability_and_accountability",
+        "high_risk_use_restrictions"
+      ]
+    },
+    {
+      "id": "ai-automation-and-work",
+      "topicName": "AI Automation & the Future of Work",
+      "category": "technology",
+      "description": "As AI changes or replaces parts of human work, should society prioritize unrestricted automation and productivity, or require stronger worker protections, transition support, and redistribution of its gains?",
+      "leftAnchorLabel": "Unrestricted Automation",
+      "rightAnchorLabel": "Strong Worker Protection",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.2,
+      "topicStatus": "emerging",
+      "activeFrom": null,
+      "activeUntil": null,
+      "dimensions": [
+        "automation_pace",
+        "worker_transition_support",
+        "gains_redistribution"
+      ]
+    },
+    {
+      "id": "data-center-infrastructure",
+      "topicName": "AI Data Centers & Infrastructure",
+      "category": "technology",
+      "description": "How should communities and governments manage the construction of energy- and water-intensive data centers, including their effects on electricity prices, land, jobs, water, and the power grid?",
+      "leftAnchorLabel": "Fast Private-Led Expansion",
+      "rightAnchorLabel": "Strict Public Planning & Cost Controls",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.1,
+      "topicStatus": "emerging",
+      "activeFrom": null,
+      "activeUntil": null
+    },
+    {
+      "id": "cryptocurrency-and-digital-assets",
+      "topicName": "Cryptocurrency & Digital Assets",
+      "category": "technology",
+      "description": "Should cryptocurrency and decentralized financial systems operate with broad freedom from government control, or should governments impose extensive consumer protections, financial rules, and oversight?",
+      "leftAnchorLabel": "Open Crypto Markets",
+      "rightAnchorLabel": "Strict Financial Regulation",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 0.9,
+      "topicStatus": "current",
+      "activeFrom": null,
+      "activeUntil": null
+    },
+    {
+      "id": "digital-privacy-and-surveillance",
+      "topicName": "Digital Privacy & Surveillance",
+      "category": "governance",
+      "description": "How should society balance personal data privacy and limits on government and corporate surveillance against security, law enforcement, and the convenience of data-driven services?",
+      "leftAnchorLabel": "Broad Data Freedom & Access",
+      "rightAnchorLabel": "Strong Privacy & Surveillance Limits",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.1,
+      "topicStatus": "core",
+      "activeFrom": null,
+      "activeUntil": null
+    },
+    {
+      "id": "platform-power-and-online-speech",
+      "topicName": "Big Tech, Platforms & Online Speech",
+      "category": "governance",
+      "description": "Should large online platforms have broad discretion over moderation and product design, or should governments impose stronger competition rules, platform accountability, and protections for online speech and users?",
+      "leftAnchorLabel": "Platform Autonomy",
+      "rightAnchorLabel": "Strong Platform Regulation",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.1,
+      "topicStatus": "core",
+      "activeFrom": null,
+      "activeUntil": null,
+      "dimensions": [
+        "market_competition",
+        "content_moderation",
+        "speech_protection",
+        "product_accountability"
+      ]
+    },
+    {
+      "id": "democracy-and-institutional-trust",
+      "topicName": "Democracy, Elections & Institutional Power",
+      "category": "governance",
+      "description": "How should the political system balance broad participation, election access, institutional checks and balances, executive power, election administration, and safeguards against abuse of power?",
+      "leftAnchorLabel": "Decentralized Governance & Executive Flexibility",
+      "rightAnchorLabel": "Strong Institutional Checks & Broad Participation",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.3,
+      "topicStatus": "core",
+      "activeFrom": null,
+      "activeUntil": null,
+      "dimensions": [
+        "election_access",
+        "checks_and_balances",
+        "executive_power",
+        "election_administration"
+      ]
+    },
+    {
+      "id": "palestine-israel-and-gaza",
+      "topicName": "Israel, Palestine & Gaza",
+      "category": "global",
+      "description": "What approach should the United States take toward the Israeli-Palestinian conflict, including civilian protection, humanitarian assistance, military aid, Palestinian self-determination, Israeli security, settlements, accountability, and the political future of Gaza?",
+      "leftAnchorLabel": "Unconditional Strategic Support for Israel",
+      "rightAnchorLabel": "Conditional Aid & Strong Palestinian Self-Determination",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.4,
+      "topicStatus": "current",
+      "activeFrom": null,
+      "activeUntil": null,
+      "dimensions": [
+        "military_aid_conditionality",
+        "humanitarian_assistance",
+        "self_determination",
+        "israeli_security_guarantees",
+        "accountability_mechanisms"
+      ]
+    },
+    {
+      "id": "iran-and-middle-east-policy",
+      "topicName": "Iran & Middle East Security",
+      "category": "global",
+      "description": "Should the United States prioritize military deterrence and pressure against Iran, or emphasize diplomacy, negotiated limits on nuclear capabilities, sanctions relief, and reduced military involvement in the region?",
+      "leftAnchorLabel": "Military Deterrence & Maximum Pressure",
+      "rightAnchorLabel": "Diplomacy & Reduced Military Involvement",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.3,
+      "topicStatus": "current",
+      "activeFrom": null,
+      "activeUntil": null,
+      "dimensions": [
+        "nuclear_limits",
+        "sanctions_policy",
+        "military_posture",
+        "regional_engagement"
+      ]
+    },
+    {
+      "id": "russia-ukraine-war",
+      "topicName": "Russia, Ukraine & European Security",
+      "category": "global",
+      "description": "What role should the United States play in the Russia-Ukraine war and European security, including military assistance, sanctions, negotiations, territorial questions, and long-term security commitments?",
+      "leftAnchorLabel": "Limited U.S. Involvement",
+      "rightAnchorLabel": "Sustained Support for Ukraine & European Security",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.2,
+      "topicStatus": "current",
+      "activeFrom": null,
+      "activeUntil": null
+    },
+    {
+      "id": "china-us-strategic-competition",
+      "topicName": "U.S.–China Strategic Competition",
+      "category": "global",
+      "description": "How should the United States manage its relationship with China across trade, technology, Taiwan, military power, diplomacy, and economic interdependence?",
+      "leftAnchorLabel": "Engagement & Economic Interdependence",
+      "rightAnchorLabel": "Strategic Containment & Reduced Dependence",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.3,
+      "topicStatus": "core",
+      "activeFrom": null,
+      "activeUntil": null,
+      "dimensions": [
+        "trade_policy",
+        "technology_controls",
+        "taiwan_commitment",
+        "military_posture",
+        "economic_interdependence"
+      ]
+    },
+    {
+      "id": "defense-spending-and-intervention",
+      "topicName": "Defense Spending & Military Intervention",
+      "category": "global",
+      "description": "How much should the United States spend on defense, and when should it use military force abroad to defend allies, deter threats, protect national interests, or respond to humanitarian crises?",
+      "leftAnchorLabel": "Restrained Defense & Non-Intervention",
+      "rightAnchorLabel": "Expanded Defense & Active Intervention",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.1,
+      "topicStatus": "core",
+      "activeFrom": null,
+      "activeUntil": null
+    },
+    {
+      "id": "immigration-and-border-policy",
+      "topicName": "Immigration & Border Policy",
+      "category": "global",
+      "description": "How should the United States balance border enforcement, legal immigration, asylum, deportation, labor needs, humanitarian obligations, and pathways to legal status?",
+      "leftAnchorLabel": "Open Immigration & Expanded Legal Entry",
+      "rightAnchorLabel": "Strict Border Enforcement & Restricted Entry",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.3,
+      "topicStatus": "current",
+      "activeFrom": null,
+      "activeUntil": null
+    },
+    {
+      "id": "climate-change-and-environment",
+      "topicName": "Climate Change & Environmental Policy",
+      "category": "environment",
+      "description": "How aggressively should governments act to reduce greenhouse-gas emissions and protect ecosystems, including through regulation, carbon pricing, public investment, and restrictions on high-emission activities?",
+      "leftAnchorLabel": "Market-Led Climate Adaptation",
+      "rightAnchorLabel": "Aggressive Public Climate Action",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.3,
+      "topicStatus": "core",
+      "activeFrom": null,
+      "activeUntil": null,
+      "dimensions": [
+        "emissions_regulation",
+        "carbon_pricing",
+        "public_investment",
+        "ecosystem_protection"
+      ]
+    },
+    {
+      "id": "energy-and-nuclear-power",
+      "topicName": "Energy Security & Nuclear Power",
+      "category": "environment",
+      "description": "How should governments balance affordable and reliable energy, fossil-fuel production, renewable energy, nuclear power, energy independence, and emissions reduction?",
+      "leftAnchorLabel": "Energy Abundance & Market Choice",
+      "rightAnchorLabel": "Planned Clean-Energy Transition",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.1,
+      "topicStatus": "core",
+      "activeFrom": null,
+      "activeUntil": null,
+      "dimensions": [
+        "fossil_production",
+        "renewable_buildout",
+        "nuclear_power",
+        "affordability_vs_emissions"
+      ]
+    },
+    {
+      "id": "cost-of-living-and-inflation",
+      "topicName": "Cost of Living & Inflation",
+      "category": "market",
+      "description": "What should governments prioritize when addressing high prices and declining affordability, including monetary policy, fiscal spending, competition, price controls, and income support?",
+      "leftAnchorLabel": "Market Adjustment & Fiscal Restraint",
+      "rightAnchorLabel": "Active Government Price & Income Intervention",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.3,
+      "topicStatus": "current",
+      "activeFrom": null,
+      "activeUntil": null
+    },
+    {
+      "id": "housing-affordability",
+      "topicName": "Housing Affordability & Homelessness",
+      "category": "market",
+      "description": "How should governments address housing costs and homelessness through zoning reform, private construction, public housing, rent regulation, housing assistance, and supportive services?",
+      "leftAnchorLabel": "Private Housing Markets & Deregulation",
+      "rightAnchorLabel": "Public Housing & Strong Housing Intervention",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.2,
+      "topicStatus": "core",
+      "activeFrom": null,
+      "activeUntil": null
+    },
+    {
+      "id": "taxation-inequality-and-wealth",
+      "topicName": "Taxation, Wealth & Inequality",
+      "category": "market",
+      "description": "How should governments distribute the costs and benefits of economic growth, including taxes on income, wealth, corporations, capital gains, and inheritances, as well as social transfers?",
+      "leftAnchorLabel": "Low Taxes & Limited Redistribution",
+      "rightAnchorLabel": "Progressive Taxation & Strong Redistribution",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.2,
+      "topicStatus": "core",
+      "activeFrom": null,
+      "activeUntil": null
+    },
+    {
+      "id": "labor-unions-and-worker-power",
+      "topicName": "Labor Unions & Worker Power",
+      "category": "market",
+      "description": "How much power should workers and labor unions have in setting wages, working conditions, benefits, and workplace rules, and how should this be balanced against employer flexibility?",
+      "leftAnchorLabel": "Employer Flexibility",
+      "rightAnchorLabel": "Strong Collective Worker Power",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1,
+      "topicStatus": "core",
+      "activeFrom": null,
+      "activeUntil": null
+    },
+    {
+      "id": "healthcare-system",
+      "topicName": "Healthcare System & Access",
+      "category": "welfare",
+      "description": "Should healthcare be guaranteed through a more publicly funded and regulated system, or should private insurance, competition, and individual choice remain the primary means of providing coverage?",
+      "leftAnchorLabel": "Private Market Healthcare",
+      "rightAnchorLabel": "Universal Publicly Guaranteed Coverage",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.2,
+      "topicStatus": "core",
+      "activeFrom": null,
+      "activeUntil": null
+    },
+    {
+      "id": "education-and-public-schools",
+      "topicName": "Education & Public Schools",
+      "category": "welfare",
+      "description": "How should society organize and fund education, including public schools, school choice, curriculum authority, parental rights, higher education, and the role of government in educational opportunity?",
+      "leftAnchorLabel": "School Choice & Decentralized Control",
+      "rightAnchorLabel": "Strong Public Education & Central Standards",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1,
+      "topicStatus": "core",
+      "activeFrom": null,
+      "activeUntil": null
+    },
+    {
+      "id": "social-rights-and-personal-autonomy",
+      "topicName": "Social Rights & Personal Autonomy",
+      "category": "social",
+      "description": "How should governments balance individual freedom in matters of identity, reproduction, sexuality, religion, and personal life against collective norms, public interests, and legal restrictions?",
+      "leftAnchorLabel": "Maximum Personal Autonomy",
+      "rightAnchorLabel": "Greater Public Regulation & Traditional Social Norms",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1.2,
+      "topicStatus": "core",
+      "activeFrom": null,
+      "activeUntil": null
+    },
     {
       "id": "firearm-regulation",
       "topicName": "Firearm Regulation",
       "category": "social",
-      "description": "Should the federal government tighten or relax the rules around who can buy guns, which weapons are legal, and how they are carried in public?",
-      "leftAnchorLabel": "Absolute Deregulation",
-      "rightAnchorLabel": "Strict Total Regulation",
-      "nationalAvg": 58,
-      "demographicSplits": {
-        "gender": {
-          "men": 50,
-          "women": 64
-        },
-        "race": {
-          "white": 55,
-          "black": 70,
-          "hispanic": 58,
-          "asian": 60,
-          "native": 62
-        },
-        "income": {
-          "lt40k": 66,
-          "_40to80k": 59,
-          "_80to150k": 53,
-          "gt150k": 51
-        },
-        "urbanicity": {
-          "urban": 65,
-          "suburban": 56,
-          "rural": 47
-        }
-      },
-      "source": "Pew Research Center · Guns in America (2023) · ACS 5-yr proxy",
-      "weight": 1
-    },
-    {
-      "id": "universal-healthcare",
-      "topicName": "Universal Healthcare",
-      "category": "welfare",
-      "description": "Should the U.S. guarantee health coverage for every resident through a publicly funded system, or leave access primarily to private insurance and market choice?",
-      "leftAnchorLabel": "Pure Market Insurance",
-      "rightAnchorLabel": "Universal Public Coverage",
-      "nationalAvg": 54,
-      "demographicSplits": {
-        "gender": {
-          "men": 51,
-          "women": 61
-        },
-        "race": {
-          "white": 52,
-          "black": 77,
-          "hispanic": 67,
-          "asian": 61,
-          "native": 69
-        },
-        "income": {
-          "lt40k": 68,
-          "_40to80k": 56,
-          "_80to150k": 48,
-          "gt150k": 42
-        },
-        "urbanicity": {
-          "urban": 65,
-          "suburban": 55,
-          "rural": 44
-        }
-      },
-      "source": "KFF Health Tracking Poll (2023) · ACS 5-yr proxy",
-      "weight": 1.3
+      "description": "Should the federal government tighten or relax the rules around who can buy guns, which weapons are legal, and how firearms are carried in public?",
+      "leftAnchorLabel": "Broad Firearm Access",
+      "rightAnchorLabel": "Strict Firearm Regulation",
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 1,
+      "topicStatus": "core",
+      "activeFrom": null,
+      "activeUntil": null
     },
     {
       "id": "trade-offshoring",
       "topicName": "Trade & Offshoring",
       "category": "global",
-      "description": "Should the U.S. prioritize free trade and global supply chains, or use tariffs and industrial policy to bring manufacturing home and reduce dependence on foreign production?",
+      "description": "Should the United States pursue open trade and global supply chains, or protect domestic industry and employment through tariffs and reshoring?",
       "leftAnchorLabel": "Full Free Trade",
       "rightAnchorLabel": "Total Economic Protectionism",
-      "nationalAvg": 52,
-      "demographicSplits": {
-        "gender": {
-          "men": 57,
-          "women": 47
-        },
-        "race": {
-          "white": 55,
-          "black": 50,
-          "hispanic": 49,
-          "asian": 53,
-          "native": 56
-        },
-        "income": {
-          "lt40k": 58,
-          "_40to80k": 53,
-          "_80to150k": 48,
-          "gt150k": 44
-        },
-        "urbanicity": {
-          "urban": 42,
-          "suburban": 50,
-          "rural": 64
-        }
-      },
-      "source": "Gallup Trade & Global Economy Poll (2024) · ACS 5-yr proxy",
-      "weight": 0.9
+      "nationalAvg": null,
+      "demographicSplits": null,
+      "source": null,
+      "weight": 0.9,
+      "topicStatus": "archived",
+      "activeFrom": null,
+      "activeUntil": null
     }
   ]
 }

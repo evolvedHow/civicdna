@@ -1,4 +1,5 @@
 import type { LocalBenchmark, Profile, Topic } from "../types";
+import { hasBenchmark } from "./topics";
 import { cohortCount } from "./profile";
 
 /** FNV-1a so the same (zip, topic) always yields the same numbers. */
@@ -51,7 +52,7 @@ function zipDensity(zip: string): number {
  * national average on this issue (mean across the dims they shared).
  */
 export function cohortOffset(topic: Topic, profile?: Profile): number {
-  if (!profile) return 0;
+  if (!profile || !hasBenchmark(topic)) return 0;
   const values: number[] = [];
   if (profile.gender) values.push(topic.demographicSplits.gender[profile.gender]);
   if (profile.race) values.push(topic.demographicSplits.race[profile.race]);
@@ -71,7 +72,11 @@ export function localBenchmark(
   zip: string,
   topic: Topic,
   profile?: Profile,
-): LocalBenchmark {
+): LocalBenchmark | null {
+  // No validated national/demographic data means no benchmark can be derived.
+  // Returning null keeps invented numbers out of the UI (change request §4).
+  if (!hasBenchmark(topic)) return null;
+
   const key = (salt: string) => mulberry32(hash(`${zip}:${topic.id}:${salt}`));
   const density = zipDensity(zip);
   const urbanPull =
@@ -104,6 +109,10 @@ export function localBenchmark(
 }
 
 /** Convenience wrapper matching the spec's `zipCodeAvg` naming. */
-export function zipCodeAvg(zip: string, topic: Topic, profile?: Profile): number {
-  return localBenchmark(zip, topic, profile).avg;
+export function zipCodeAvg(
+  zip: string,
+  topic: Topic,
+  profile?: Profile,
+): number | null {
+  return localBenchmark(zip, topic, profile)?.avg ?? null;
 }

@@ -1,5 +1,6 @@
 import type { Answers, Profile, Topic } from "../types";
 import { localBenchmark } from "./zipData";
+import { getPosition } from "./stance";
 
 export interface TopicComparison {
   topic: Topic;
@@ -15,6 +16,11 @@ export interface TopicComparison {
 
 export interface CohortComparison {
   rows: TopicComparison[];
+  /**
+   * Topics the respondent answered that carry no validated benchmark data,
+   * so no comparison is possible. Surfaced rather than silently dropped.
+   */
+  unbenchmarked: Topic[];
   /** Mean |value − localAvg| across answered topics, 0..99. */
   avgLocalGap: number;
   /** Mean |value − nationalAvg| across answered topics. */
@@ -39,17 +45,25 @@ export function compareToCohort(
   profile: Profile,
 ): CohortComparison {
   const rows: TopicComparison[] = [];
+  const unbenchmarked: Topic[] = [];
 
   for (const topic of topics) {
-    const value = answers[topic.id];
+    const value = getPosition(answers, topic.id);
     if (value == null) continue; // untouched topics are not a stance
-    const localAvg = localBenchmark(zip, topic, profile).avg;
+
+    const local = localBenchmark(zip, topic, profile);
+    if (local == null || topic.nationalAvg == null) {
+      // Answered, but there is nothing verified to compare against.
+      unbenchmarked.push(topic);
+      continue;
+    }
+
     rows.push({
       topic,
       value,
       nationalAvg: topic.nationalAvg,
-      localAvg,
-      vsLocal: value - localAvg,
+      localAvg: local.avg,
+      vsLocal: value - local.avg,
       vsNational: value - topic.nationalAvg,
     });
   }
@@ -60,6 +74,7 @@ export function compareToCohort(
 
   return {
     rows,
+    unbenchmarked,
     avgLocalGap: mean((r) => r.vsLocal),
     avgNationalGap: mean((r) => r.vsNational),
     outliers: rows

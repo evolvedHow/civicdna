@@ -2,8 +2,10 @@ import type { Category } from "../types";
 
 export const CATEGORY_ORDER: Category[] = [
   "market",
-  "social",
   "welfare",
+  "social",
+  "environment",
+  "technology",
   "global",
   "governance",
 ];
@@ -36,5 +38,15 @@ export const CATEGORY_META: Record<
     label: "Governance",
     chip: "bg-slate-100 text-slate-700 ring-slate-300",
     accent: "#475569",
+  },
+  technology: {
+    label: "Technology & AI",
+    chip: "bg-sky-50 text-sky-700 ring-sky-200",
+    accent: "#0284c7",
+  },
+  environment: {
+    label: "Climate & Energy",
+    chip: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    accent: "#059669",
   },
 };

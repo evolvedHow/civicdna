@@ -9,9 +9,10 @@ into a single index with a shareable badge.
 
 ```bash
 npm install
-npm run dev      # → http://localhost:5173
-npm run build    # tsc --noEmit && vite build → dist/
-npm run preview  # serve the production build
+npm run dev       # → http://localhost:5173
+npm run validate  # topic/config validation suite
+npm run build     # validate && tsc --noEmit && vite build → dist/
+npm run preview   # serve the production build
 ```
 
 ## How the score works
@@ -31,10 +32,19 @@ re-normalise, so a partial run still lands on the same scale.
 Unanswered topics are **excluded**, not scored as neutral — folding in defaults
 drags every partial result toward the centre.
 
+Salience weighting (`effectiveWeight = topicWeight × salience/50`) is
+implemented but **off** — `scoring.useSalience` in `config.yaml`. Turning it on
+changes the meaning of every previously recorded composite, so it is opt-in.
+
 **Decisiveness** is a separate number: mean distance from neutral, as a share of
 the maximum possible. It measures distance, not direction — a firmly-held left
-position and a firmly-held right position score identically, so question wording
+position at either end of a spectrum scores identically, so question wording
 can't inflate it. This is why the stance scale must stay symmetric.
+
+The index is **not** a left/right political identity. `leftAnchorLabel` and
+`rightAnchorLabel` are the poles of each issue's own policy spectrum; the field
+names are retained for schema compatibility only. Band copy must not use party
+or ideology labels.
 
 ### Two scoring invariants
 
@@ -56,9 +66,41 @@ Placeholders available in those templates: `{score}` `{suffix}` `{scoreLabel}`
 `{answered}` `{total}` `{zip}` `{brand}` `{url}`. Unknown tokens render verbatim
 so a typo is visible rather than silently blank.
 
-`src/data/topics.json` holds the issue bank. **Only 3 of an intended 25 topics
-are present** (see `meta.demoNote`) — with this few, two of the five radar
-categories never appear.
+## Topics
+
+`src/data/topics.json` holds the issue bank: **23 active topics** across seven
+categories (technology, governance, global, environment, market, welfare,
+social), plus archived topics retained for historical answers.
+
+No code asserts a topic count — the list can grow or shrink freely. `meta.
+totalTopics` is validated against the actual active count rather than enforcing
+a target.
+
+Each topic may carry:
+
+- `topicStatus` — `core` | `current` | `emerging` | `archived` (default `core`).
+  Archived topics leave the questionnaire and the composite but stay readable.
+- `activeFrom` / `activeUntil` — ISO dates bounding when a topic is asked.
+- `dimensions` — documentation-only list of sub-axes a topic really spans, for
+  a future multi-question model. No scoring logic reads it.
+
+### Demographic data is deliberately null
+
+`nationalAvg`, `demographicSplits` and `source` are `null` on every topic.
+**Do not populate them with estimates.** The app degrades honestly: issue cards
+show "no validated benchmark for this issue yet" instead of bars, and the cohort
+comparison explains it has nothing to compare against. Benchmarks switch on
+per-topic as real data is attached.
+
+The validator enforces that `nationalAvg` and `demographicSplits` arrive
+together, and that neither ships without a `source`.
+
+## Validation
+
+`npm run validate` (also part of `npm run build`) checks schema integrity,
+unique ids, weights > 0, `neutral === (min + max) / 2`, agreement between
+`topics.json` and `config.yaml`, gapless badge bands, and flags topic names that
+overlap enough to suggest a redundant measurement.
 
 ## AI narrative (optional)
 

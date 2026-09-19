@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import topicsJson from "../data/topics.json";
-import type { Topic } from "../types";
-import { BRAND } from "../lib/config";
+import { BRAND, SCORE } from "../lib/config";
+import { getPosition } from "../lib/stance";
+import { TOPICS as topics } from "../lib/topics";
 import { useAppStore } from "../store/useAppStore";
 import IssueCard from "./IssueCard";
 import StanceRail from "./StanceRail";
 import StanceSummarySheet from "./StanceSummarySheet";
-
-const topics = topicsJson.topics as Topic[];
 
 export default function QuizView() {
   const zip = useAppStore((s) => s.zip);
@@ -110,7 +108,7 @@ export default function QuizView() {
               topic={t}
               zip={zip}
               profile={profile}
-              value={answers[t.id] ?? 50}
+              value={getPosition(answers, t.id) ?? SCORE.neutral}
               touched={Boolean(touched[t.id])}
               index={i}
               total={topics.length}

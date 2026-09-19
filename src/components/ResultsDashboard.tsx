@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
-import topicsJson from "../data/topics.json";
-import type { Category, Topic } from "../types";
+import type { Category } from "../types";
+import { TOPICS as topics } from "../lib/topics";
 import { CATEGORY_META, CATEGORY_ORDER } from "../lib/categories";
 import { computeGenome } from "../lib/genome";
 import {
@@ -24,8 +24,6 @@ import BadgeCard from "./BadgeCard";
 import CohortComparison from "./CohortComparison";
 import NarrativePanel from "./NarrativePanel";
 import WeightingPanel from "./WeightingPanel";
-
-const topics = topicsJson.topics as Topic[];
 
 export default function ResultsDashboard() {
   const zip = useAppStore((s) => s.zip);

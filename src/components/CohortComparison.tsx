@@ -46,9 +46,36 @@ export default function CohortComparison({
   gapLabel,
   outlierGap,
 }: Props) {
-  const { rows, avgLocalGap, avgNationalGap, outliers, aligned, aboveLocal } =
-    comparison;
-  if (rows.length === 0) return null;
+  const {
+    rows,
+    unbenchmarked,
+    avgLocalGap,
+    avgNationalGap,
+    outliers,
+    aligned,
+    aboveLocal,
+  } = comparison;
+
+  // Nothing verified to compare against yet. Say so plainly rather than
+  // rendering an empty panel or, worse, estimated numbers.
+  if (rows.length === 0) {
+    if (unbenchmarked.length === 0) return null;
+    return (
+      <section className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-4">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+          You vs. your cohort
+        </p>
+        <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+          None of the {unbenchmarked.length} issue
+          {unbenchmarked.length === 1 ? " you have" : "s you have"} answered
+          carries validated survey data yet, so there is nothing to compare you
+          against. Your score above is built purely from your own positions.
+          Cohort comparison switches on per-issue as real benchmark data is
+          attached.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -91,12 +118,21 @@ export default function CohortComparison({
 
       <p className="mt-3 text-xs leading-relaxed text-slate-600">
         On {aboveLocal} of {rows.length} answered issue
-        {rows.length === 1 ? "" : "s"} you sit further toward the regulating /
-        collective pole than your neighbours;{" "}
+        {rows.length === 1 ? "" : "s"} you sit further toward that issue's
+        second anchor than your neighbours do;{" "}
         {aligned.length > 0
           ? `you are in step with them on ${aligned.length}.`
           : "you are not closely in step with them on any."}
       </p>
+
+      {unbenchmarked.length > 0 && (
+        <p className="mt-2 text-[10px] leading-relaxed text-slate-400">
+          {unbenchmarked.length} further answered issue
+          {unbenchmarked.length === 1 ? " has" : "s have"} no validated
+          benchmark yet and {unbenchmarked.length === 1 ? "is" : "are"} left
+          out of these figures.
+        </p>
+      )}
 
       <ul className="mt-3 space-y-3">
         {rows.map((row) => {

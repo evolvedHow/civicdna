@@ -1,4 +1,18 @@
-export type Category = "market" | "social" | "welfare" | "global" | "governance";
+export type Category =
+  | "market"
+  | "social"
+  | "welfare"
+  | "global"
+  | "governance"
+  | "technology"
+  | "environment";
+
+/**
+ * Topic lifecycle. Only `core`/`current`/`emerging` topics are scored;
+ * `archived` topics are retained so historical answers stay interpretable
+ * but are excluded from the active question set and the composite.
+ */
+export type TopicStatus = "core" | "current" | "emerging" | "archived";
 
 export type GenderSplit = { men: number; women: number };
 export type RaceSplit = {
@@ -28,13 +42,36 @@ export interface Topic {
   topicName: string;
   category: Category;
   description: string;
+  /**
+   * The two ends of THIS ISSUE'S policy spectrum — not political left/right.
+   * "Private Market Healthcare -> Universal Public Coverage" is a policy axis,
+   * not a party axis. Field names are retained for schema compatibility.
+   *
+   * Orientation is a scoring invariant: the right anchor is always the more
+   * collective / regulated / publicly-coordinated pole.
+   */
   leftAnchorLabel: string;
   rightAnchorLabel: string;
-  nationalAvg: number;
-  demographicSplits: DemographicSplits;
-  source: string;
-  /** Optional salience weight used in the weighted fingerprint score (default 1). */
+  /** null until empirically validated. Never fabricate. */
+  nationalAvg: number | null;
+  /** null until empirically validated. Never fabricate. */
+  demographicSplits: DemographicSplits | null;
+  /** null until a real citation exists. */
+  source: string | null;
+  /** Salience weight within the topic's category (default 1). */
   weight?: number;
+  /** Defaults to "core" when absent. */
+  topicStatus?: TopicStatus;
+  /** ISO date; topic is inactive before this. */
+  activeFrom?: string | null;
+  /** ISO date; topic is inactive after this. */
+  activeUntil?: string | null;
+  /**
+   * Documentation-only for now: sub-dimensions this topic really spans.
+   * Present so a future multi-question model has somewhere to live; no
+   * scoring logic reads this field.
+   */
+  dimensions?: string[];
 }
 
 export interface Badge {
@@ -77,6 +114,8 @@ export interface DecisivenessConfig {
 export interface ScoringConfig {
   /** Relative pull of each radar axis on the composite index. Missing = 1. */
   categoryWeights?: Partial<Record<Category, number>>;
+  /** Weight topics by respondent-declared salience. Default false. */
+  useSalience?: boolean;
 }
 
 export interface AppConfig {
@@ -103,8 +142,27 @@ export interface Profile {
   income?: keyof IncomeSplit;
 }
 
-/** One locked stance: topic id -> 1..100 */
-export type Answers = Record<string, number>;
+/**
+ * A respondent's answer to one topic.
+ *
+ * Historically this was a bare number (the position). The object form adds
+ * salience and confidence without invalidating stored data, so both shapes
+ * are accepted forever — read through the helpers in lib/stance.ts rather
+ * than indexing `Answers` directly.
+ */
+export interface StanceRecord {
+  /** Where the respondent falls on the issue spectrum, 0..100. */
+  position: number;
+  /** How much the issue matters to them, 0..100. Optional. */
+  salience?: number;
+  /** How certain they are of their position, 0..100. Optional. */
+  confidence?: number;
+}
+
+export type StanceValue = number | StanceRecord;
+
+/** One locked stance per topic id. Bare number = position only (legacy). */
+export type Answers = Record<string, StanceValue>;
 
 /** Category name -> 0..100 basket average (radar axes). */
 export type CategoryScores = Record<Category, number>;

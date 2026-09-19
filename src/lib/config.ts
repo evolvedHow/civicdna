@@ -39,6 +39,12 @@ export const DECISIVENESS = {
 
 export const SHARE_TEMPLATE = raw.share?.text ?? "{scoreLabel} {score}{suffix}";
 
+/**
+ * Weight answers by how much the respondent says each issue matters to them.
+ * OFF by default — flipping this changes every historical composite score.
+ */
+export const USE_SALIENCE = raw.scoring?.useSalience ?? false;
+
 /** Per-category pull on the composite index. Any category omitted defaults to 1. */
 export const CATEGORY_WEIGHTS: Record<Category, number> = {
   market: raw.scoring?.categoryWeights?.market ?? 1,
@@ -46,6 +52,8 @@ export const CATEGORY_WEIGHTS: Record<Category, number> = {
   welfare: raw.scoring?.categoryWeights?.welfare ?? 1,
   global: raw.scoring?.categoryWeights?.global ?? 1,
   governance: raw.scoring?.categoryWeights?.governance ?? 1,
+  technology: raw.scoring?.categoryWeights?.technology ?? 1,
+  environment: raw.scoring?.categoryWeights?.environment ?? 1,
 };
 
 export const BADGES = (raw.badges ?? []).slice().sort((a, b) => a.min - b.min);
