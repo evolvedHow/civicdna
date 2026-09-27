@@ -32,9 +32,17 @@ re-normalise, so a partial run still lands on the same scale.
 Unanswered topics are **excluded**, not scored as neutral — folding in defaults
 drags every partial result toward the centre.
 
-Salience weighting (`effectiveWeight = topicWeight × salience/50`) is
-implemented but **off** — `scoring.useSalience` in `config.yaml`. Turning it on
-changes the meaning of every previously recorded composite, so it is opt-in.
+Every question can also be **rated for importance, 0–5** (default `3`), which
+scales how much that answer counts (`effectiveWeight = topicWeight ×
+rating/IMPORTANCE.default`). The default is a no-op, so scores recorded before
+the control existed are unchanged; `0` means the answer does not count at all
+and is excluded from the maths, which re-normalises the rest. Ratings are
+opt-in per question and are stored with the answer (`salience` on the stance
+record), so rating a question before positioning it does not register a neutral
+answer. The persisted store is version `3`; older ratings on a `0–100` scale
+are rescaled on load.
+
+Tunable under `importance:` in `config.yaml` (`enabled`, `default`, `max`).
 
 **Decisiveness** is a separate number: mean distance from neutral, as a share of
 the maximum possible. It measures distance, not direction — a firmly-held left
@@ -46,6 +54,51 @@ The index is **not** a left/right political identity. `leftAnchorLabel` and
 names are retained for schema compatibility only. Band copy must not use party
 or ideology labels.
 
+### The results spectrum
+
+A single `60/100, 44% decisive` pair turned out to be the least useful thing on
+the results page, so the headline is now a five-band **distribution** of the
+same weighted answers:
+
+| Band | Stance |
+| --- | --- |
+| Individual | far below neutral |
+| Leaning individual | just below |
+| Moderate | within `spectrum.neutralBand` of neutral |
+| Leaning collective | just above |
+| Collective | far above |
+
+Each band percentage is a **share of total effective weight**, so the five
+numbers sum to exactly 100 and the weighting shown against every question in
+the quiz is literally what moves them. Alongside it: a signed `tilt`
+(-100..+100), the `intensity` of each band, and a per-band list of the issues
+that produced it, named with their own anchor wording.
+
+The labels describe the axis every topic's anchors already share — from
+individual/market discretion to collective/regulated coordination. They are
+presentational only. Per change request §14 they never appear as the primary
+response choices; the sliders keep using each topic's own fluid anchor labels.
+Tunable in `config.yaml` under `spectrum:` (labels, `neutralBand`,
+`strongThreshold`, `evenThreshold`), and guarded by `npm run validate`.
+
+### The shareable badge
+
+The downloadable image is the same idea taken further: instead of a dial and a
+single figure, it is one horizontal axis with a **bubble per category** —
+`x` is where that category landed, fill is read off the same gradient as the
+axis, and area is its share of the composite. There is deliberately no headline
+number, since a single figure on a shareable image invites exactly the
+comparison that means least.
+
+Categories do cluster, often hard, so the layout is a real packing problem.
+Bubbles are separated **vertically only** — `x` is the value encoding, and
+nudging a bubble sideways would move a category off the position it actually
+scored. When a cluster will not fit, the radius cap gives way until it does,
+which keeps area *proportional* to share (area is what the eye reads as
+magnitude) at the cost of overall scale. `layoutBubbles()` in
+`src/lib/badgeImage.ts` is pure geometry with no canvas dependency, so this is
+testable without a renderer.
+
 ### Two scoring invariants
 
 - `score.neutral` in `config.yaml` **must** be the exact midpoint of
@@ -56,14 +109,16 @@ or ideology labels.
 
 ## Configuration
 
-`src/data/config.yaml` drives branding, the score scale, decisiveness copy,
-share text, category weights, and the range-based badge bands — no code changes
-needed. Bands are inclusive `min..max` and should tile the full score range.
-Each band may override the global `explanation` and `shareText` templates.
+`src/data/config.yaml` drives branding, the score scale, decisiveness copy, the
+results spectrum, share text, category weights, and the range-based badge bands —
+no code changes needed. Bands are inclusive `min..max` and should tile the full
+score range. Each band may override the global `explanation` and `shareText`
+templates.
 
 Placeholders available in those templates: `{score}` `{suffix}` `{scoreLabel}`
 `{badge}` `{tagline}` `{decisive}` `{decisiveLabel}` `{avgDistance}`
-`{answered}` `{total}` `{zip}` `{brand}` `{url}`. Unknown tokens render verbatim
+`{answered}` `{total}` `{zip}` `{brand}` `{url}` `{spectrumHeadline}` `{tilt}`
+`{tiltText}` `{spectrum}`. Unknown tokens render verbatim
 so a typo is visible rather than silently blank.
 
 ## Topics

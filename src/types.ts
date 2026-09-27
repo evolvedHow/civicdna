@@ -125,8 +125,60 @@ export interface DecisivenessConfig {
 export interface ScoringConfig {
   /** Relative pull of each radar axis on the composite index. Missing = 1. */
   categoryWeights?: Partial<Record<Category, number>>;
-  /** Weight topics by respondent-declared salience. Default false. */
-  useSalience?: boolean;
+}
+
+/**
+ * Presentational banding of the stance scale, used to render the derived
+ * results spectrum as a distribution instead of a single number.
+ *
+ * These labels name the axis that EVERY topic's anchors already sit on —
+ * individual/market discretion at score.min, collective/regulated
+ * coordination at score.max. They are deliberately not party labels, and per
+ * change request §14 they must never surface as the primary response choices
+ * on a question slider. The per-topic `leftAnchorLabel` / `rightAnchorLabel`
+ * stay fluid and match the tone of the issue being asked.
+ */
+export interface SpectrumConfig {
+  /** Far end of the scale, at score.min. */
+  lowLabel?: string;
+  /** Just off centre, toward lowLabel. */
+  lowLeanLabel?: string;
+  /** The centre band. */
+  neutralLabel?: string;
+  /** Just off centre, toward highLabel. */
+  highLeanLabel?: string;
+  /** Far end of the scale, at score.max. */
+  highLabel?: string;
+  /** Points off neutral that still count as the centre band. */
+  neutralBand?: number;
+  /** Points off neutral beyond which a stance is a full pole, not a lean. */
+  strongThreshold?: number;
+  /** Percentage points the two sides may differ by before the split reads even. */
+  evenThreshold?: number;
+}
+
+/**
+ * Per-question importance rating. A 0..`max` control ("how important is this
+ * to you?") that scales the question's weight, rather than a 0..100 slider —
+ * five taps is the right amount of effort for a modifier, and a fine-grained
+ * score would imply a precision the respondents do not have.
+ *
+ * `default` is the multiplier's denominator, so rating a question `default`
+ * is a no-op and the shipped default therefore leaves every historical score
+ * untouched. Changing `default` is a scoring change.
+ */
+export interface ImportanceConfig {
+  /** False falls back to a flat weight and hides the control. */
+  enabled?: boolean;
+  /** Pre-selected rating. Must be > 0; it is the multiplier denominator. */
+  default?: number;
+  /** Highest rating offered. */
+  max?: number;
+  prompt?: string;
+  lowLabel?: string;
+  highLabel?: string;
+  /** Copy shown once a question is rated 0 and drops out of the score. */
+  excludedNote?: string;
 }
 
 export interface AppConfig {
@@ -134,6 +186,8 @@ export interface AppConfig {
   brand?: BrandConfig;
   score?: ScoreConfig;
   decisiveness?: DecisivenessConfig;
+  spectrum?: SpectrumConfig;
+  importance?: ImportanceConfig;
   share?: { text?: string };
   scoring?: ScoringConfig;
   badges: Badge[];
@@ -156,15 +210,27 @@ export interface Profile {
 /**
  * A respondent's answer to one topic.
  *
- * Historically this was a bare number (the position). The object form adds
- * salience and confidence without invalidating stored data, so both shapes
- * are accepted forever — read through the helpers in lib/stance.ts rather
- * than indexing `Answers` directly.
+ * Historically this was a bare number (the position). The object form adds an
+ * importance rating and a confidence rating without invalidating stored data,
+ * so both shapes are accepted forever — read through the helpers in
+ * lib/stance.ts rather than indexing `Answers` directly.
  */
 export interface StanceRecord {
-  /** Where the respondent falls on the issue spectrum, 0..100. */
-  position: number;
-  /** How much the issue matters to them, 0..100. Optional. */
+  /**
+   * Where the respondent falls on the issue spectrum, 0..100.
+   *
+   * Optional because a rating can be set before a position: rating a question
+   * must not be read as answering it at neutral. Absent means unanswered, and
+   * `getPosition` reports that as undefined.
+   */
+  position?: number;
+  /**
+   * How much the issue matters to them. This is the field `importance.max` in
+   * config.yaml bounds — 0..5 as shipped, NOT 0..100. It was originally
+   * specced as 0..100 (change request §6) and no UI ever wrote it, so nothing
+   * was stored on that scale; the store migration rescales any stray legacy
+   * value anyway.
+   */
   salience?: number;
   /** How certain they are of their position, 0..100. Optional. */
   confidence?: number;

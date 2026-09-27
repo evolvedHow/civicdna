@@ -17,7 +17,7 @@ interface AppState {
   setZip: (zip: string) => void;
   setProfile: (profile: Partial<Profile>) => void;
   setStance: (topicId: string, value: number) => void;
-  /** Optional: how much this issue matters to the respondent (0..100). */
+  /** Importance rating, 0..IMPORTANCE.max. 0 drops the question from the score. */
   setSalience: (topicId: string, value: number) => void;
   /** Optional: how certain the respondent is of their position (0..100). */
   setConfidence: (topicId: string, value: number) => void;
@@ -62,7 +62,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "civicdna-store",
-      version: 2,
+      version: 3,
       migrate: migrateAppState,
       // A stale `screen: "results"` from a previous session would otherwise
       // drop a returning user straight into a dashboard for answers they may

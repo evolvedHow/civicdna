@@ -5,19 +5,36 @@ import { SCORE } from "../lib/config";
 interface Props {
   breakdown: CategoryBreakdown[];
   /** Per-topic salience weights, revealed alongside the category weights. */
-  topicWeights: { id: string; name: string; category: string; weight: number }[];
+  topicWeights: {
+    id: string;
+    name: string;
+    category: string;
+    weight: number;
+    /** 0..1 — this question's share of the whole index. */
+    share: number;
+    /** The respondent's importance rating, 0..IMPORTANCE.max. */
+    rating: number;
+    /** False when the rating is the inherited default rather than a choice. */
+    ratingSet: boolean;
+  }[];
 }
 
 /**
- * Deliberately NOT shown during the quiz. Seeing that an issue counts 1.3x
- * while answering it invites gaming the score, so the weighting is only
- * disclosed once the badge has been generated and the answers are locked in.
+ * The full weighting disclosure, after the result exists.
+ *
+ * Each question's percentage is also shown live on its own card during the
+ * quiz. That is a deliberate reversal of the previous stance here, which hid
+ * the numbers to avoid people steering their answers toward cheap points: the
+ * survey is weighted, and an undisclosed weighting cannot be checked or
+ * argued with, so the weights are shown and the share is described as
+ * "assuming you answer everything" rather than left to be inferred.
  */
 export default function WeightingPanel({ breakdown, topicWeights }: Props) {
   const live = breakdown.filter((b) => b.answered > 0);
   if (live.length === 0) return null;
 
-  const uneven = topicWeights.some((t) => t.weight !== 1);
+  const uneven =
+    topicWeights.some((t) => t.weight !== 1) || topicWeights.some((t) => t.ratingSet);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -93,13 +110,31 @@ export default function WeightingPanel({ breakdown, topicWeights }: Props) {
                 >
                   ×{t.weight}
                 </span>
+                <span
+                  title={t.ratingSet ? "You rated this" : "Default rating"}
+                  className={`w-8 shrink-0 text-center tabular-nums ${
+                    t.ratingSet
+                      ? "font-semibold text-indigo-700"
+                      : "text-slate-300"
+                  }`}
+                >
+                  {t.ratingSet ? t.rating : "–"}
+                </span>
+                <span className="w-12 shrink-0 text-right font-semibold tabular-nums text-slate-700">
+                  {(t.share * 100).toFixed(1)}%
+                </span>
               </li>
             ))}
           </ul>
           <p className="mt-2 text-[10px] leading-relaxed text-slate-400">
-            These set how much each issue counts against its siblings within
-            the same category. Hidden during the quiz so they can't steer your
-            answers.
+            <span className="font-semibold text-slate-500">×n</span> is the
+            issue weight set in the question bank, which decides how it counts
+            against its siblings in the same category.{" "}
+            <span className="font-semibold text-slate-500">rating</span> is
+            what you said about how much it matters to you; the two multiply.
+            The percentage is the share of the whole index that question
+            carries, assuming every issue is answered — skip a category and its
+            weight redistributes across the rest.
           </p>
         </details>
       )}

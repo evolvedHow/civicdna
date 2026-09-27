@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BRAND, SCORE } from "../lib/config";
-import { getPosition } from "../lib/stance";
+import { getImportance, hasExplicitRating, getPosition } from "../lib/stance";
+import { computeTopicWeights } from "../lib/genome";
 import { TOPICS as topics } from "../lib/topics";
 import { useAppStore } from "../store/useAppStore";
 import IssueCard from "./IssueCard";
@@ -13,6 +14,7 @@ export default function QuizView() {
   const answers = useAppStore((s) => s.answers);
   const touched = useAppStore((s) => s.touched);
   const setStance = useAppStore((s) => s.setStance);
+  const setSalience = useAppStore((s) => s.setSalience);
   const setScreen = useAppStore((s) => s.setScreen);
   const reset = useAppStore((s) => s.reset);
 
@@ -24,6 +26,15 @@ export default function QuizView() {
     [touched],
   );
   const remaining = topics.length - answeredCount;
+
+  // Depends on `answers` because importance ratings reweight the questions. It
+  // still holds still in practice: an unrated question inherits the default
+  // rating, whose multiplier is 1, so only questions the respondent has
+  // actually rated move their own share.
+  const weightsById = useMemo(
+    () => computeTopicWeights(topics, answers),
+    [answers],
+  );
 
   useEffect(() => {
     const els = topics
@@ -106,13 +117,17 @@ export default function QuizView() {
           >
             <IssueCard
               topic={t}
+              weight={weightsById.get(t.id)!}
               zip={zip}
               profile={profile}
               value={getPosition(answers, t.id) ?? SCORE.neutral}
+              rating={getImportance(answers, t.id)}
+              ratingSet={hasExplicitRating(answers, t.id)}
               touched={Boolean(touched[t.id])}
               index={i}
               total={topics.length}
               onStanceChange={(v) => setStance(t.id, v)}
+              onRatingChange={(v) => setSalience(t.id, v)}
             />
           </div>
         </section>

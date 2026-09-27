@@ -2,11 +2,13 @@ import { useCallback, useMemo, useState } from "react";
 import type { Category } from "../types";
 import { TOPICS as topics } from "../lib/topics";
 import { CATEGORY_META, CATEGORY_ORDER } from "../lib/categories";
-import { computeGenome } from "../lib/genome";
+import { computeGenome, computeSpectrum, computeTopicWeights } from "../lib/genome";
+import { hasExplicitRating } from "../lib/stance";
 import {
   BRAND,
   DECISIVENESS,
   findBadge,
+  IMPORTANCE,
   SCORE,
   SHARE_TEMPLATE,
 } from "../lib/config";
@@ -23,6 +25,7 @@ import { FingerprintGem } from "./icons";
 import BadgeCard from "./BadgeCard";
 import CohortComparison from "./CohortComparison";
 import NarrativePanel from "./NarrativePanel";
+import SpectrumPanel from "./SpectrumPanel";
 import WeightingPanel from "./WeightingPanel";
 
 export default function ResultsDashboard() {
@@ -36,6 +39,13 @@ export default function ResultsDashboard() {
   const [shareError, setShareError] = useState<string | null>(null);
 
   const genome = useMemo(() => computeGenome(topics, answers), [answers]);
+  const spectrum = useMemo(() => computeSpectrum(topics, answers), [answers]);
+  // Answer-dependent: a question the respondent never touched, or rated 0, is
+  // not part of their score and must not be quoted a share of it.
+  const topicWeightsById = useMemo(
+    () => computeTopicWeights(topics, answers),
+    [answers],
+  );
   const badge = useMemo(() => findBadge(genome.index), [genome.index]);
   const comparison = useMemo(
     () => compareToCohort(topics, answers, zip, profile),
@@ -79,8 +89,15 @@ export default function ResultsDashboard() {
       zip,
       brand: BRAND.name,
       url: BRAND.shareUrl,
+      spectrumHeadline: spectrum.headline,
+      tilt: spectrum.tilt,
+      tiltText: spectrum.tiltText,
+      spectrum: spectrum.bands
+        .filter((b) => b.count > 0)
+        .map((b) => `${b.pct}% ${b.label.toLowerCase()}`)
+        .join(", "),
     }),
-    [genome, badge, zip],
+    [genome, spectrum, badge, zip],
   );
 
   // Per-band override falls back to the global template.
@@ -106,8 +123,12 @@ export default function ResultsDashboard() {
       : local
         ? "."
         : "";
-    return `Your ${SCORE.label} is ${genome.index}${SCORE.suffix}, held at ${genome.decisive}% ${DECISIVENESS.label}${lean} — ${badge.name}: "${badge.tagline}".${local}${out}`;
-  }, [genome, leanCategory, badge, comparison, zip]);
+    const spread = spectrum.bands
+      .filter((b) => b.count > 0)
+      .map((b) => `${b.pct}% ${b.label.toLowerCase()}`)
+      .join(", ");
+    return `Across the ${spectrum.answered} issues you answered you came out ${spread} — ${spectrum.tiltText}${lean}. On the combined scale that is ${SCORE.label} ${genome.index}${SCORE.suffix} at ${genome.decisive}% ${DECISIVENESS.label} — ${badge.name}: "${badge.tagline}".${local}${out}`;
+  }, [genome, spectrum, leanCategory, badge, comparison, zip]);
 
   const shareText = useMemo(
     () => fill(badge.shareText ?? SHARE_TEMPLATE, vars),
@@ -116,28 +137,44 @@ export default function ResultsDashboard() {
 
   const topicWeights = useMemo(
     () =>
-      topics.map((t) => ({
-        id: t.id,
-        name: t.topicName,
-        category: t.category,
-        weight: t.weight ?? 1,
-      })),
-    [],
+      topics.map((t) => {
+        const w = topicWeightsById.get(t.id);
+        return {
+          id: t.id,
+          name: t.topicName,
+          category: t.category,
+          weight: t.weight ?? 1,
+          share: w?.share ?? 0,
+          rating: w?.rating ?? IMPORTANCE.default,
+          ratingSet: hasExplicitRating(answers, t.id),
+        };
+      }),
+    [topicWeightsById, answers],
   );
 
   const buildImage = useCallback(
     () =>
       renderBadgeImage({
         badge,
-        score: genome.index,
-        decisive: genome.decisive,
         decisiveCaption,
-        scoreLabel: SCORE.label,
+        spectrumHeadline: spectrum.headline,
+        tiltText: spectrum.tiltText,
         zip,
         cohort,
-        perCategory: genome.perCategory,
+        // One bubble per answered category: where it landed, and how much of
+        // the composite it carries.
+        bubbles: genome.breakdown
+          .filter((b) => b.answered > 0)
+          .map((b) => ({
+            category: b.category,
+            score: b.score,
+            share: b.share,
+          })),
+        missingCategories: genome.breakdown
+          .filter((b) => b.answered === 0)
+          .map((b) => b.category),
       }),
-    [badge, genome, zip, cohort, decisiveCaption],
+    [badge, genome, spectrum, zip, cohort, decisiveCaption],
   );
 
   const filename = `civicdna-${badge.id}-${genome.index}.png`;
@@ -233,13 +270,10 @@ export default function ResultsDashboard() {
               Your Genome
             </h1>
           </div>
-          <div className="flex h-11 items-center gap-2 rounded-full bg-white px-3.5 shadow-sm ring-1 ring-slate-200">
+          <div className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-3.5 shadow-sm ring-1 ring-slate-200">
             <FingerprintGem />
-            <span className="text-sm font-extrabold tabular-nums text-slate-900">
-              {genome.index}
-              <span className="text-xs font-semibold text-slate-400">
-                {SCORE.suffix}
-              </span>
+            <span className="text-sm font-extrabold text-slate-900">
+              {spectrum.headline}
             </span>
           </div>
         </header>
@@ -256,6 +290,8 @@ export default function ResultsDashboard() {
             </p>
           </div>
         )}
+
+        <SpectrumPanel spectrum={spectrum} />
 
         <BadgeCard
           badge={badge}

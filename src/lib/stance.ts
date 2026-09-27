@@ -1,4 +1,5 @@
 import type { Answers, StanceRecord, StanceValue } from "../types";
+import { IMPORTANCE } from "./config";
 
 /**
  * Answers are stored either as a bare number (the original schema, still in
@@ -20,14 +21,39 @@ export function getPosition(
   return Number.isFinite(pos) ? pos : undefined;
 }
 
-/** 0..100 importance the respondent placed on this issue, if they said. */
-export function getSalience(
+/** Raw stored importance rating, or undefined if they never rated it. */
+function rawRating(
   answers: Answers,
   topicId: string,
 ): number | undefined {
   const v = answers[topicId];
   if (v == null || typeof v === "number") return undefined;
   return Number.isFinite(v.salience) ? v.salience : undefined;
+}
+
+/**
+ * The importance rating to score with: 0..IMPORTANCE.max, clamped, falling
+ * back to the configured default when the respondent never rated the question.
+ *
+ * Clamping matters because a stored value is not trusted data — a stray
+ * out-of-range number would silently reweight the composite, and a negative one
+ * would drop the question without the UI ever saying so.
+ */
+export function getImportance(
+  answers: Answers,
+  topicId: string,
+): number {
+  const r = rawRating(answers, topicId);
+  if (r == null) return IMPORTANCE.default;
+  return Math.min(IMPORTANCE.max, Math.max(0, r));
+}
+
+/** True only if the respondent explicitly set a rating (vs. inheriting one). */
+export function hasExplicitRating(
+  answers: Answers,
+  topicId: string,
+): boolean {
+  return rawRating(answers, topicId) != null;
 }
 
 /** 0..100 certainty the respondent expressed, if they said. */
@@ -54,20 +80,24 @@ export function withPosition(
   return { ...value, position };
 }
 
-/** Immutably set salience, promoting a legacy bare number to a record. */
+/**
+ * Immutably set the importance rating, promoting a legacy bare number to a
+ * record. Deliberately does NOT seed a position: a question rated before it is
+ * positioned must stay unanswered rather than silently scoring as neutral.
+ */
 export function withSalience(
   value: StanceValue | undefined,
   salience: number,
 ): StanceRecord {
-  const base = value == null ? { position: 50 } : toRecord(value);
+  const base = value == null ? {} : toRecord(value);
   return { ...base, salience };
 }
 
-/** Immutably set confidence, promoting a legacy bare number to a record. */
+/** Immutably set confidence. Like `withSalience`, never seeds a position. */
 export function withConfidence(
   value: StanceValue | undefined,
   confidence: number,
 ): StanceRecord {
-  const base = value == null ? { position: 50 } : toRecord(value);
+  const base = value == null ? {} : toRecord(value);
   return { ...base, confidence };
 }

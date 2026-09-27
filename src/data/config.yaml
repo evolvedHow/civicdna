@@ -8,7 +8,9 @@
 # IMPORTANT (change request §5, §14): the index is NOT a left/right political
 # identity. It describes a pattern of civic positions across issues. Band copy
 # must not use Democrat / Republican / liberal / conservative / left / right as
-# labels for the score.
+# labels for the score. The results spectrum below is separate from all of this:
+# it labels the shared individual/collective axis that the topic anchors
+# already describe, and it is a derived read-out, not the underlying model.
 #
 # TEMPLATE PLACEHOLDERS usable in every `explanation` / `shareText` string:
 #   {score}       composite index, e.g. 66
@@ -24,6 +26,10 @@
 #   {zip}         the user's ZIP
 #   {brand}       brand.name
 #   {url}         brand.shareUrl
+#   {spectrumHeadline} dominant spectrum band, or "Evenly split"
+#   {tilt}        signed net tilt, -100..+100
+#   {tiltText}    same, pre-worded
+#   {spectrum}    all five band percentages, e.g. "8% individual, 22% ..."
 # ============================================================================
 schemaVersion: 2
 
@@ -64,16 +70,93 @@ decisiveness:
 
 share:
   # Default share text. Bands may override with their own `shareText`.
+  # The spectrum leads: it is the read-out people can check, and the only one
+  # that says how the answers were distributed rather than where they averaged.
   text: |-
-    {brand} — my {scoreLabel} is {score}{suffix}: {badge}.
-    "{tagline}" · {decisive}% {decisiveLabel} across {answered} of {total} issues.
-    {url}
+    {brand} — {spectrumHeadline}, {tiltText}.
+    {spectrum} across {answered} of {total} issues.
+    "{tagline}" · {url}
+
+# ---------------------------------------------------------------------------
+# The results spectrum.
+#
+# A single "60/100, 44% decisive" pair is hard to interpret and easy to argue
+# with, so the headline result is a five-band distribution: the share of your
+# weighted answers sitting at each point on the axis. Same maths as the
+# composite, read as a shape instead of a coordinate.
+#
+# The labels below name the axis every topic's anchors already share — from
+# individual/market discretion at 0, through the neutral midpoint, to
+# collective/regulated coordination at 100. They are presentation only:
+#   * change request §14 forbids them as the primary response choices, so the
+#     question sliders keep using each topic's own fluid anchor labels;
+#   * they are not party labels, and the score is still not a left/right
+#     identity — a high collective share means you favour coordinated
+#     institutions on the issues asked, nothing more.
+# ---------------------------------------------------------------------------
+spectrum:
+  lowLabel: "Individual"
+  lowLeanLabel: "Leaning individual"
+  neutralLabel: "Moderate"
+  highLeanLabel: "Leaning collective"
+  highLabel: "Collective"
+
+  # Width of the centre band, in points either side of score.neutral.
+  neutralBand: 5
+  # Past this distance from neutral a stance counts as a full pole rather than
+  # a lean. 20 leaves two 15-point lean bands and two 30-point pole bands,
+  # which reads as a spectrum without making "moderate" the default answer.
+  strongThreshold: 20
+
+  # If the two sides differ by no more than this many percentage points, the
+  # result is reported as evenly split rather than leaning anywhere.
+  evenThreshold: 10
+
+# ---------------------------------------------------------------------------
+# Per-issue importance rating.
+#
+# Every question can be rated 0..`max` on "how important is this to you?",
+# defaulting to `default`. It multiplies that question's weight:
+#
+#   effectiveWeight = topicWeight x (rating / default)
+#
+# so the rating is a 0..5 range over the weight, not over the score:
+#
+#   0 -> 0.00x  the question is dropped from the score entirely
+#   1 -> 0.33x
+#   2 -> 0.67x
+#   3 -> 1.00x  the default, and a NO-OP
+#   4 -> 1.33x
+#   5 -> 1.67x
+#
+# The default is the denominator on purpose: a respondent who rates nothing
+# gets exactly the weight — and therefore exactly the score — they got before
+# this existed, so no historical composite silently moves. Anything that
+# changes the default changes everyone's meaning of the number, so treat it as
+# a scoring change and re-test.
+# ---------------------------------------------------------------------------
+importance:
+  enabled: true
+  # Pre-selected rating. MUST be > 0 (it is the multiplier's denominator) and
+  # MUST be a no-op rating, or every existing score shifts.
+  default: 3
+  # Highest rating offered. A 0..5 control is the point: five taps, no slider.
+  max: 5
+
+  # Copy for the control and its two ends.
+  prompt: "How important is this to you?"
+  lowLabel: "Not at all"
+  highLabel: "Essential"
+  # Shown next to the weight block once a question is rated 0.
+  excludedNote: >-
+    Rated 0, so this question is left out of your score. Your position is
+    still saved — raise the rating to count it.
 
 # How the composite index is assembled.
 #
 # TWO-STAGE, CATEGORY-WEIGHTED:
 #   1. Within a category, topics are averaged using their own `weight` from
-#      topics.json (salience of that issue against its siblings).
+#      topics.json, scaled by the respondent's importance rating.
 #   2. Category scores are then averaged using the weights below.
 #
 # Stage 2 is the point: without it, a lopsided question bank skews the score.
@@ -84,13 +167,6 @@ share:
 # Categories with no answered topics drop out and the rest re-normalise, so a
 # partial run is still scored on the same scale.
 scoring:
-  # Weight each topic by how important the respondent says it is, using
-  #   effectiveWeight = topicWeight x (salience / 50)
-  # Midpoint salience is a no-op, so nobody's score moves unless they actually
-  # set salience. Leave FALSE unless you have re-tested: turning it on changes
-  # the meaning of every previously recorded composite.
-  useSalience: false
-
   categoryWeights:
     market: 1
     welfare: 1

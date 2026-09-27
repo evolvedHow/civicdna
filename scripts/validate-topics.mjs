@@ -102,8 +102,8 @@ for (const [cat, w] of Object.entries(config.scoring?.categoryWeights ?? {})) {
   if (typeof w !== "number" || !(w > 0))
     fail(`categoryWeights.${cat} must be a number > 0`);
 }
-if (config.scoring?.useSalience === true)
-  warn("scoring.useSalience is ON — this changes the meaning of historical composite scores");
+if (config.scoring?.useSalience !== undefined)
+  fail("scoring.useSalience was replaced by the `importance` block; remove it — it is no longer read");
 
 // ------------------------------------------------------------ badge bands ---
 const bands = [...(config.badges ?? [])].sort((a, b) => a.min - b.min);
@@ -137,6 +137,66 @@ for (let i = 0; i < active.length; i++) {
   }
 }
 
+// ---------------------------------------------------------- spectrum bands ---
+// The results spectrum bands the stance scale into five groups. A bad threshold
+// here does not fail loudly at runtime — it just quietly produces a result
+// nobody can band, or one where "moderate" swallows every answer.
+const spectrum = config.spectrum ?? {};
+const SPECTRUM_LABELS = [
+  "lowLabel",
+  "lowLeanLabel",
+  "neutralLabel",
+  "highLeanLabel",
+  "highLabel",
+];
+for (const key of SPECTRUM_LABELS) {
+  if (typeof spectrum[key] !== "string" || spectrum[key].trim() === "")
+    fail(`spectrum.${key} must be a non-empty string`);
+}
+const uniqueLabels = new Set(SPECTRUM_LABELS.map((k) => spectrum[k]));
+if (uniqueLabels.size !== SPECTRUM_LABELS.length)
+  fail(`spectrum band labels must all differ (got ${[...uniqueLabels].join(", ")})`);
+
+const maxDistance = Math.min(neutral - min, max - neutral);
+const specNeutral = spectrum.neutralBand ?? 5;
+const specStrong = spectrum.strongThreshold ?? 20;
+if (typeof specNeutral !== "number" || specNeutral < 0)
+  fail(`spectrum.neutralBand must be a number >= 0 (got ${JSON.stringify(specNeutral)})`);
+if (typeof specStrong !== "number" || specStrong <= 0)
+  fail(`spectrum.strongThreshold must be a number > 0 (got ${JSON.stringify(specStrong)})`);
+if (specNeutral >= specStrong)
+  fail(`spectrum.neutralBand (${specNeutral}) must be < strongThreshold (${specStrong}) or the lean bands vanish`);
+if (specStrong > maxDistance)
+  fail(`spectrum.strongThreshold (${specStrong}) exceeds the furthest reachable distance from neutral (${maxDistance}); the full-pole bands would be unreachable`);
+const specEven = spectrum.evenThreshold ?? 10;
+if (typeof specEven !== "number" || specEven < 0 || specEven > 50)
+  fail(`spectrum.evenThreshold must be a number between 0 and 50 (got ${JSON.stringify(specEven)})`);
+
+// The five labels must sit on the axis the topic anchors already describe, in
+// ascending order. A stray flip here would bucket stances against their own
+// question wording.
+if (spectrum.lowLabel && spectrum.highLabel && spectrum.lowLabel === spectrum.highLabel)
+  fail("spectrum.lowLabel and spectrum.highLabel must differ");
+
+// ------------------------------------------------------------- importance ---
+// The per-question importance rating. Two failure modes matter and neither
+// throws: a `default` outside the control's range is unreachable or divides by
+// zero in the multiplier, and a `default` that is not a no-op silently moves
+// every score recorded before the control existed.
+const importance = config.importance ?? {};
+if (importance.enabled !== false) {
+  const impMax = importance.max ?? 5;
+  const impDefault = importance.default ?? 3;
+  if (!Number.isInteger(impMax) || impMax < 1 || impMax > 9)
+    fail(`importance.max must be an integer 1..9 so the control stays a usable row of buttons (got ${JSON.stringify(impMax)})`);
+  if (!Number.isInteger(impDefault) || impDefault <= 0)
+    fail(`importance.default must be a positive integer — it is the multiplier's denominator (got ${JSON.stringify(impDefault)})`);
+  if (impDefault > impMax)
+    fail(`importance.default (${impDefault}) is above importance.max (${impMax}), so the pre-selected rating could not be tapped`);
+  if (config.spectrum && impMax !== (spectrum.max ?? 5))
+    warn(`importance.max (${impMax}) and spectrum.max (${spectrum.max ?? 5}) differ — the rating control and the result bands are tuned independently`);
+}
+
 // ------------------------------------------------------------------ report ---
 for (const w of warnings) console.warn(`  warn  ${w}`);
 for (const f of failures) console.error(`  FAIL  ${f}`);
@@ -146,6 +206,7 @@ console.log(
   `\ntopics: ${active.length} active, ${topics.length - active.length} archived` +
     ` · benchmark data on ${benchmarked}/${active.length}` +
     ` · badge bands: ${bands.length}` +
+    ` · spectrum ±${specStrong} (centre ±${specNeutral})` +
     ` · ${warnings.length} warning(s), ${failures.length} failure(s)`,
 );
 

@@ -3,19 +3,27 @@ import { CATEGORY_META } from "../lib/categories";
 import { localBenchmark, cohortOffset } from "../lib/zipData";
 import { hasBenchmark } from "../lib/topics";
 import { cohortLabel } from "../lib/profile";
-import { MAX_DISTANCE, SCORE } from "../lib/config";
+import { MAX_DISTANCE, IMPORTANCE, SCORE } from "../lib/config";
+import type { TopicWeightShare } from "../lib/genome";
 
 interface IssueCardProps {
   topic: Topic;
+  /** How much of the composite this question carries, disclosed on the card. */
+  weight: TopicWeightShare;
   zip: string;
   profile: Profile;
   /** Current value from the store (1..100). */
   value: number;
+  /** Importance rating, 0..IMPORTANCE.max. Defaults to IMPORTANCE.default. */
+  rating: number;
+  /** True once the respondent has explicitly set a rating. */
+  ratingSet: boolean;
   /** True once the user actually moved this topic's slider. */
   touched: boolean;
   index: number;
   total: number;
   onStanceChange: (value: number) => void;
+  onRatingChange: (value: number) => void;
 }
 
 const NEUTRAL_BAND = 4;
@@ -71,13 +79,17 @@ function MiniBar({
 
 export default function IssueCard({
   topic,
+  weight,
   zip,
   profile,
   value,
+  rating,
+  ratingSet,
   touched,
   index,
   total,
   onStanceChange,
+  onRatingChange,
 }: IssueCardProps) {
   const meta = CATEGORY_META[topic.category];
   const benchmarked = hasBenchmark(topic);
@@ -127,6 +139,60 @@ export default function IssueCard({
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
           {topic.description}
         </p>
+      </section>
+
+      {/* Weighting disclosure. The composite is a product of two averages, so a
+          question's share of it factors exactly into
+          `categoryShare x withinCategory` — shown here as both numbers rather
+          than one, so a weighted result can be checked instead of trusted. */}
+      <section
+        className={`mx-5 mt-4 rounded-2xl border p-3.5 transition ${
+          weight.share > 0
+            ? "border-slate-200 bg-slate-50/80"
+            : "border-rose-200 bg-rose-50"
+        }`}
+      >
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+            How much this counts
+          </span>
+          <span
+            className={`shrink-0 text-[11px] font-bold tabular-nums ${
+              weight.share > 0 ? "text-slate-700" : "text-rose-700"
+            }`}
+          >
+            {weight.share > 0
+              ? `${(weight.share * 100).toFixed(1)}% of your score`
+              : "Not counted"}
+          </span>
+        </div>
+        {weight.share > 0 && (
+          <>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${weight.withinCategory * 100}%`,
+                  backgroundColor: meta.accent,
+                }}
+              />
+            </div>
+            <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500">
+              {(weight.withinCategory * 100).toFixed(0)}% of the weight inside{" "}
+              {meta.label}, which is itself{" "}
+              {(weight.categoryShare * 100).toFixed(1)}% of your score · issue
+              weight ×{weight.topicWeight}
+              {ratingSet && ` · rated ${rating}`}. This is the
+              full-question-bank share — leave whole categories blank and the
+              remaining ones absorb their weight.
+            </p>
+          </>
+        )}
+        {weight.share === 0 && (
+          <p className="mt-1.5 text-[10px] leading-relaxed text-rose-700">
+            {IMPORTANCE.excludedNote}
+          </p>
+        )}
       </section>
 
       {/* Data context panel — only rendered when real data backs it. */}
@@ -258,6 +324,65 @@ export default function IssueCard({
           </span>
         </div>
       </div>
+
+      {/* Importance rating — the second input, and the only one that changes
+          how much the first one is worth. Sits directly under the slider so the
+          effect on the "how much this counts" block above is obvious. */}
+      {IMPORTANCE.enabled && (
+        <div className="mx-5 mt-5 rounded-2xl border border-slate-200 bg-white p-3.5">
+          <div className="flex items-baseline justify-between gap-2">
+            <span
+              id={`importance-label-${topic.id}`}
+              className="text-[11px] font-semibold text-slate-700"
+            >
+              {IMPORTANCE.prompt}
+            </span>
+            {!ratingSet && (
+              <span className="text-[10px] text-slate-400">
+                default {IMPORTANCE.default}
+              </span>
+            )}
+          </div>
+
+          <div
+            role="radiogroup"
+            aria-labelledby={`importance-label-${topic.id}`}
+            className="mt-2.5 grid grid-cols-6 gap-1.5"
+          >
+            {Array.from({ length: IMPORTANCE.max + 1 }, (_, r) => {
+              const active = rating === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => onRatingChange(r)}
+                  className={`h-10 rounded-xl text-sm font-bold tabular-nums transition ${
+                    active
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+                  }`}
+                >
+                  {r}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-1.5 flex items-baseline justify-between text-[10px] text-slate-400">
+            <span>0 · {IMPORTANCE.lowLabel}</span>
+            <span>
+              {IMPORTANCE.max} · {IMPORTANCE.highLabel}
+            </span>
+          </div>
+
+          <p className="mt-2 text-[10px] leading-relaxed text-slate-400">
+            This scales how much the question counts — it does not change where
+            you sit on the issue.
+          </p>
+        </div>
+      )}
 
       <footer className="px-5 pb-6 pt-4">
         <p className="flex items-center justify-center gap-1.5 text-center text-[11px] font-medium text-slate-400">
